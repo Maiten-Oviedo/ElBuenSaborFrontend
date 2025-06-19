@@ -1,0 +1,31 @@
+
+
+//COMO USARLO
+// import * as Yup from 'yup'
+// import MyForm from './MyForm'
+
+// const initialValues = {
+//   name: '',
+//   email: '',
+// }
+
+// const validationSchema = Yup.object({
+//   name: Yup.string().required('Requerido'),
+//   email: Yup.string().email('Email inválido').required('Requerido'),
+// })
+
+// const fields = [
+//   { name: 'name', label: 'Nombre', type: 'text' },
+//   { name: 'email', label: 'Email', type: 'email' },
+// ]
+
+// <MyForm
+//   initialValues={initialValues}
+//   validationSchema={validationSchema}
+//   onSubmit={(values, { resetForm }) => {
+//     console.log(values)
+//     resetForm()
+//   }}
+//   fields={fields}
+//   textButton="Enviar"
+// />

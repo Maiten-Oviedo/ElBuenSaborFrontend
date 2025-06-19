@@ -1,0 +1,25 @@
+export const unidadMedidaEnumArray = [
+  'UNIDAD',
+  'MG',
+  'GR',
+  'HG',
+  'KG',
+  'TON',
+  'ML',
+  'CL',
+  'DL',
+  'L',
+  'M3',
+  'MM',
+  'CM',
+  'M',
+  'KM',
+  'UNI',
+  'DOC',
+  'PAR',
+  'SEG',
+  'MIN',
+  'H',
+] as const
+
+export type UnidadMedidaEnum = (typeof unidadMedidaEnumArray)[number]

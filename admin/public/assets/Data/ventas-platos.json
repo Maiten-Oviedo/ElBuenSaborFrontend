@@ -1,0 +1,32 @@
+[
+  {
+    "articuloId": 1,
+    "nombre": "Pizza Napolitana",
+    "cantidadVendida": 120,
+    "categoria": "Plato Principal"
+  },
+  {
+    "articuloId": 2,
+    "nombre": "Empanada de Carne",
+    "cantidadVendida": 95,
+    "categoria": "Entrada"
+  },
+  {
+    "articuloId": 3,
+    "nombre": "Milanesa con Papas",
+    "cantidadVendida": 75,
+    "categoria": "Plato Principal"
+  },
+  {
+    "articuloId": 4,
+    "nombre": "Sopa de Calabaza",
+    "cantidadVendida": 60,
+    "categoria": "Entrada"
+  },
+  {
+    "articuloId": 5,
+    "nombre": "Pizza Fugazzeta",
+    "cantidadVendida": 55,
+    "categoria": "Plato Principal"
+  }
+]

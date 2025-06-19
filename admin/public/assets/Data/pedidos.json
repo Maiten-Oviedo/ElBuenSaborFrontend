@@ -1,0 +1,114 @@
+[
+  {
+    "id": "1",
+    "horaEstimadaFinalizacion": "2025-05-26T14:30:00",
+    "total": 3200,
+    "tipoEnvioEnum": "delivery",
+    "estadoEnum": "en cocina",
+    "formaPagoEnum": "mercadopago",
+    "fechaPedido": "2025-05-26T13:50:00",
+    "detallePedido": [
+      { "id": 1, "cantidad": 2, "subtotal": 1800, "idArticulo": 101, "idPedido": 1 },
+      { "id": 2, "cantidad": 1, "subtotal": 1400, "idArticulo": 102, "idPedido": 1 }
+    ],
+    "idFactura": 501,
+    "idDomicilio": 201,
+    "idCliente": 301,
+    "idSucursal": 1,
+    "indicaciones": "Sin cebolla en la hamburguesa",
+    "pagado": true
+  },
+  {
+    "id": "2",
+    "horaEstimadaFinalizacion": "2025-05-26T15:10:00",
+    "total": 2500,
+    "tipoEnvioEnum": "en local",
+    "estadoEnum": "a confirmar",
+    "formaPagoEnum": "efectivo",
+    "fechaPedido": "2025-05-26T14:45:00",
+    "detallePedido": [
+      { "id": 3, "cantidad": 1, "subtotal": 2500, "idArticulo": 103, "idPedido": 2 }
+    ],
+    "idFactura": 502,
+    "idDomicilio": 202,
+    "idCliente": 302,
+    "idSucursal": 1,
+    "indicaciones": "",
+    "pagado": false
+  },
+  {
+    "id": "3",
+    "horaEstimadaFinalizacion": "2025-05-26T16:00:00",
+    "total": 4500,
+    "tipoEnvioEnum": "delivery",
+    "estadoEnum": "en delivery",
+    "formaPagoEnum": "mercadopago",
+    "fechaPedido": "2025-05-26T15:20:00",
+    "detallePedido": [
+      { "id": 4, "cantidad": 3, "subtotal": 2700, "idArticulo": 104, "idPedido": 3 },
+      { "id": 5, "cantidad": 2, "subtotal": 1800, "idArticulo": 105, "idPedido": 3 }
+    ],
+    "idFactura": 503,
+    "idDomicilio": 203,
+    "idCliente": 303,
+    "idSucursal": 1,
+    "indicaciones": "Dejar en portería",
+    "pagado": true
+  },
+  {
+    "id": "4",
+    "horaEstimadaFinalizacion": "2025-05-26T17:00:00",
+    "total": 1800,
+    "tipoEnvioEnum": "en local",
+    "estadoEnum": "listo",
+    "formaPagoEnum": "efectivo",
+    "fechaPedido": "2025-05-26T16:10:00",
+    "detallePedido": [
+      { "id": 6, "cantidad": 2, "subtotal": 1800, "idArticulo": 106, "idPedido": 4 }
+    ],
+    "idFactura": 504,
+    "idDomicilio": 204,
+    "idCliente": 304,
+    "idSucursal": 2,
+    "indicaciones": "",
+    "pagado": false
+  },
+  {
+    "id": "5",
+    "horaEstimadaFinalizacion": "2025-05-26T18:30:00",
+    "total": 5600,
+    "tipoEnvioEnum": "delivery",
+    "estadoEnum": "entregado",
+    "formaPagoEnum": "mercadopago",
+    "fechaPedido": "2025-05-26T17:40:00",
+    "detallePedido": [
+      { "id": 7, "cantidad": 1, "subtotal": 3000, "idArticulo": 107, "idPedido": 5 },
+      { "id": 8, "cantidad": 2, "subtotal": 2600, "idArticulo": 108, "idPedido": 5 }
+    ],
+    "idFactura": 505,
+    "idDomicilio": 205,
+    "idCliente": 305,
+    "idSucursal": 2,
+    "indicaciones": "Agregar salsa adicional",
+    "pagado": true
+  },
+  {
+    "id": "6",
+    "horaEstimadaFinalizacion": "2025-05-26T19:00:00",
+    "total": 2200,
+    "tipoEnvioEnum": "en local",
+    "estadoEnum": "en cocina",
+    "formaPagoEnum": "efectivo",
+    "fechaPedido": "2025-05-26T18:20:00",
+    "detallePedido": [
+      { "id": 9, "cantidad": 1, "subtotal": 1200, "idArticulo": 109, "idPedido": 6 },
+      { "id": 10, "cantidad": 1, "subtotal": 1000, "idArticulo": 110, "idPedido": 6 }
+    ],
+    "idFactura": 506,
+    "idDomicilio": 206,
+    "idCliente": 306,
+    "idSucursal": 2,
+    "indicaciones": "",
+    "pagado": false
+  }
+]
