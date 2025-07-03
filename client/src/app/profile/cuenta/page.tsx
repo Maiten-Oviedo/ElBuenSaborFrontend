@@ -72,7 +72,7 @@ const Cuenta = () => {
               className="rounded-full object-cover transition duration-300 group-hover:brightness-110 outline-2 outline-offset-5 outline-white"
             />
             <Link
-              href={`/profile/cuenta/editar-imagen/${cliente?.id}`}
+              href={`/profile/cuenta/editar-imagen`}
               className="absolute inset-0 bg-gray-900/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"
             >
               <p className="text-white text-sm font-semibold text-center">
@@ -105,10 +105,7 @@ const Cuenta = () => {
       )}
 
       <div className="w-full h-16 flex justify-center items-center">
-        <Button
-          variant="primary"
-          href={`/profile/cuenta/editar/${cliente?.id}`}
-        >
+        <Button variant="primary" href={`/profile/cuenta/editar`}>
           Editar
         </Button>
       </div>

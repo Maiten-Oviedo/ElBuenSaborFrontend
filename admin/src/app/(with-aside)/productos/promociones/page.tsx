@@ -1,8 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import GenericTable from '@/common/components/generic table/GenericTable'
-import { useStoreManufacturados } from '@/store/storeManufacturados'
-import { manufacturadosAdminTableColumns } from '@/common/lib/constants/adminTableColumns'
 import { useStorePromociones } from '@/store/storePromocion'
 import { promocionTableColumns } from '@/common/lib/constants/promocionTableColumns'
 

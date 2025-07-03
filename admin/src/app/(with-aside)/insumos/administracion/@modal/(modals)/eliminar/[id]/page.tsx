@@ -1,5 +1,5 @@
 'use client'
-import DeleteItemAlertInsumo from '@/common/components/deleteItemAlertInsumo/DeleteItemAlertInsumo'
+import DeleteItemAlert from '@/common/components/deleteItemAlert/DeleteItemAlert'
 import Modal from '@/common/components/modal/Modal'
 import { useInsumos } from '@/common/hooks/useInsumos'
 import { useParams } from 'next/navigation'
@@ -16,7 +16,7 @@ export default function DeletePage() {
   }
   return (
     <Modal>
-      <DeleteItemAlertInsumo
+      <DeleteItemAlert
         id={id}
         endpoint={endpoint}
         deleteFunction={handleDeleteInsumo}

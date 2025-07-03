@@ -1,6 +1,5 @@
 // app/LayoutWrapper.tsx
 'use client'
-import { useAuthStore } from '@/common/store/useAuthStore'
 import { usePathname } from 'next/navigation'
 import Header from '../common/components/layout/header/Header'
 
@@ -9,8 +8,6 @@ export default function LayoutWrapper({
 }: {
   children: React.ReactNode
 }) {
-  const user = useAuthStore(state => state.cliente)
-
   const pathname = usePathname()
   const noHeaderRoutes = ['/auth/login', '/auth/register']
   const showHeader = !noHeaderRoutes.includes(pathname)

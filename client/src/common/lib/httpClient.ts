@@ -4,16 +4,16 @@ import { useAuthStore } from '@/common/store/useAuthStore'
 
 export default function httpClient() {
   async function customFetch(endpoint: string, options: RequestInit) {
-    const token = useAuthStore.getState().token // Obtiene el token actual sin usar hook
+    const token = useAuthStore.getState().token
+    const isFormData = options.body instanceof FormData
 
-    const defaultHeader: HeadersInit = {
-      accept: 'application/json',
-      'Content-Type': 'application/json',
+    const headers: HeadersInit = {
+      accept: 'application/json, text/plain',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     }
 
-    // Agregar el token si está disponible
     if (token) {
-      defaultHeader['Authorization'] = `Bearer ${token}`
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     const controller = new AbortController()
@@ -22,24 +22,25 @@ export default function httpClient() {
     const finalOptions: RequestInit = {
       ...options,
       method: options.method || 'GET',
-      headers: { ...defaultHeader, ...options.headers },
+      headers: { ...headers, ...options.headers },
       signal: controller.signal,
+      credentials: 'include',
     }
 
-    // Si no hay body, lo eliminamos para evitar conflictos
-    if (!finalOptions.body) {
-      delete finalOptions.body
+    if (isFormData) {
+      delete (finalOptions.headers as Record<string, string>)['Content-Type']
     }
 
     try {
       const response = await fetch(endpoint, finalOptions)
       clearTimeout(timeoutId)
 
-      if (response.status === 204) {
-        return { message: 'No Content' }
-      }
+      const contentType = response.headers.get('Content-Type') || ''
+
+      if (response.status === 204) return { message: 'No Content' }
 
       if (!response.ok) {
+        // Intenta leer como JSON, si no se puede, cae en un error genérico
         const errorData = await response.json().catch(() => ({}))
         throw {
           cause: response.status,
@@ -47,35 +48,32 @@ export default function httpClient() {
         }
       }
 
-      return await response.json()
-    } catch (error: unknown) {
-      if ((error as Error).name === 'AbortError') {
+      // Manejo defensivo según tipo de contenido
+      if (contentType.includes('application/json')) {
+        return await response.json()
+      } else {
+        // Si no es JSON, devolvemos texto como mensaje
+        const text = await response.text()
+        return { message: text }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
         throw { status: 408, message: 'Request Timeout' }
       }
       throw error
     }
   }
 
-  const get = (endpoint: string, options: RequestInit = {}) =>
-    customFetch(endpoint, options)
-
-  const post = (endpoint: string, options: RequestInit = {}) =>
-    customFetch(endpoint, { ...options, method: 'POST' })
-
-  const put = (endpoint: string, options: RequestInit = {}) =>
-    customFetch(endpoint, { ...options, method: 'PUT' })
-
-  const del = (endpoint: string, options: RequestInit = {}) =>
-    customFetch(endpoint, { ...options, method: 'DELETE' })
-
-  const patch = (endpoint: string, options: RequestInit = {}) =>
-    customFetch(endpoint, { ...options, method: 'PATCH' })
-
   return {
-    get,
-    post,
-    put,
-    del,
-    patch,
+    get: (endpoint: string, options: RequestInit = {}) =>
+      customFetch(endpoint, options),
+    post: (endpoint: string, options: RequestInit = {}) =>
+      customFetch(endpoint, { ...options, method: 'POST' }),
+    put: (endpoint: string, options: RequestInit = {}) =>
+      customFetch(endpoint, { ...options, method: 'PUT' }),
+    del: (endpoint: string, options: RequestInit = {}) =>
+      customFetch(endpoint, { ...options, method: 'DELETE' }),
+    patch: (endpoint: string, options: RequestInit = {}) =>
+      customFetch(endpoint, { ...options, method: 'PATCH' }),
   }
 }

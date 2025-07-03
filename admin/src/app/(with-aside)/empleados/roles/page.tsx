@@ -1,18 +1,20 @@
-"use client";
+'use client'
 
 import Button from '@/common/components/button/Button'
 import GenericTable from '@/common/components/generic table/GenericTable'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { rolesTableColumns } from '@/common/lib/constants/empleadosTablesColumns'
-import { Roles } from "../../../../../public/assets/Data/roles"
+import httpClient from '@/common/lib/httpClient'
+import { useEmpleadoStore } from '@/store/storeEmpleados'
+
 type Props = {}
 
 const Page = (props: Props) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const { roles, fetchRoles, isLoading, error } = useEmpleadoStore()
 
-  // ACA IRIAN LOS FETCHS
-
+  useEffect(() => {
+    fetchRoles()
+  }, [])
 
   return (
     <div>
@@ -22,7 +24,7 @@ const Page = (props: Props) => {
         error={error}
         isLoading={isLoading}
         columns={rolesTableColumns}
-        data={Roles}
+        data={roles}
       />
     </div>
   )

@@ -1,9 +1,11 @@
-"use client"
-// Movimientos.tsx
+'use client'
 
-import React, { useEffect, useState } from 'react'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js'
+import { Pie } from 'react-chartjs-2'
+ChartJS.register(ArcElement, Tooltip, Legend, Title)
+import { useState } from 'react'
 import GenericTable from '@/common/components/generic table/GenericTable'
-import {bebidasTableColumns } from '@/common/lib/constants/estadisticasTableColumns'
+import { bebidasTableColumns } from '@/common/lib/constants/estadisticasTableColumns'
 
 type Plato = {
   denominacion: string
@@ -20,6 +22,51 @@ export default function VentasBebidas({ dateRange, bebidasData }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
+  const labels = bebidasData.map(p => p.denominacion)
+  const cantidades = bebidasData.map(p => p.cantidadTotal)
+
+  const pieData = {
+    labels,
+    datasets: [
+      {
+        label: 'Cant. ventas',
+        data: cantidades,
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#66BB6A',
+          '#BA68C8',
+          '#FFA726',
+          '#8D6E63',
+          '#42A5F5',
+          '#D4E157',
+          '#90A4AE',
+        ],
+        borderColor: '#fff',
+        borderWidth: 2,
+      },
+    ],
+  }
+
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          color: '#1f2937',
+        },
+      },
+      title: {
+        display: true,
+        text: 'Ranking Articulos de Venta Directa - Cant. Ventas',
+        color: '#1f2937',
+        font: { size: 16, weight: 'bold' as const },
+      },
+    },
+  }
+
   return (
     <div>
       <div>
@@ -29,10 +76,28 @@ export default function VentasBebidas({ dateRange, bebidasData }: Props) {
             : 'Mostrando todos los registros'}
         </p>
       </div>
-
-      {/* Tabla */}
-      <GenericTable columns={bebidasTableColumns} data={bebidasData} error={error}
-        isLoading={isLoading} dataType='ranking' />
+      <div className="w-full h-16 flex justify-center items-center">
+        <p className="font-black text-2xl">
+          RANKING ARTICULOS DE VENTA DIRECTA
+        </p>
+      </div>
+      <div className="w-full flex gap-5">
+        <div className="w-full max-w-[50%]">
+          <GenericTable
+            esEstadistica={true}
+            columns={bebidasTableColumns}
+            data={bebidasData}
+            error={error}
+            isLoading={isLoading}
+            dataType="ranking"
+          />
+        </div>
+        {bebidasData.length > 0 && (
+          <div className="w-full max-w-[50%] h-[400px] flex items-center justify-center bg-white bg-opacity-60 p-4 rounded-xl shadow-md mx-auto">
+            <Pie data={pieData} options={pieOptions} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

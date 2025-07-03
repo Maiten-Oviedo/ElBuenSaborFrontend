@@ -7,36 +7,38 @@ import FiltroProducto from '@/features/menu/FiltroProducto'
 import CartPreviewModal from '@/features/cart/CartPreviewModal'
 import { useCartStore } from '@/common/store/useCartStore'
 import httpClient from '@/common/lib/httpClient'
-import { categoriaMap, FiltroMenu } from '@/common/types/FiltroMenu'
+import { filtrarPorMenu, FiltroMenu } from '@/common/types/FiltroMenu'
 import { Producto } from '@/common/types/Producto'
+import { useAuthStore } from '@/common/store/useAuthStore'
+import { useRouter } from 'next/navigation'
 
 const Menu = () => {
   const [filtroCategoria, setFiltroCategoria] = useState<FiltroMenu>('TODO')
   const [productos, setProductos] = useState<Producto[]>([])
+  const logout = useAuthStore(state => state.logout)
+  const router = useRouter()
 
   const [loading, setLoading] = useState(true)
   const [hovered, setHovered] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const searchTerm = useSearchStore(state => state.searchTerm)
   const cartItems = useCartStore(state => state.items)
 
-  const productosFiltrados = productos.filter(prod => {
-    const categoriaFiltro = categoriaMap[filtroCategoria]
-
-    const matchCategoria =
-      categoriaFiltro === null ||
-      (Array.isArray(categoriaFiltro)
-        ? categoriaFiltro.includes(prod.categoriaId)
-        : prod.categoriaId === categoriaFiltro)
-
-    return (
-      matchCategoria &&
+  const productosFiltrados = productos.filter(
+    prod =>
+      filtrarPorMenu(filtroCategoria, prod) &&
       prod.denominacion.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })
+  )
+  const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
+    setHasMounted(true)
+  }, [])
+  useEffect(() => {
     const obtenerDatos = async () => {
+      setLoading(true)
+      setError(null)
       try {
         //Promesa en paralelo
         const [productosResponse, bebidasResponse, promocionesResponse] =
@@ -45,7 +47,7 @@ const Menu = () => {
               'http://localhost:8080/articulo-manufacturado/basic/getAll'
             ),
             httpClient().get(
-              'http://localhost:8080/articulo-insumo/bebidas/basic/getAll'
+              'http://localhost:8080/articulo-insumo/vendibles/basic/getAll'
             ),
             httpClient().get(
               'http://localhost:8080/articulo-promocion/basic/getAll'
@@ -57,8 +59,12 @@ const Menu = () => {
           ...bebidasResponse,
           ...promocionesResponse,
         ])
-      } catch (error) {
-        console.error('Error al obtener los productos y bebidas', error)
+      } catch (error: unknown) {
+        if ((error as Error).cause === 401) {
+          logout()
+          router.push('/auth/login')
+        }
+        setError((error as Error).message || 'Error al cargar los productos')
       } finally {
         setLoading(false)
       }
@@ -66,8 +72,6 @@ const Menu = () => {
 
     obtenerDatos()
   }, [])
-
-  if (loading) return <p>Cargando Productos</p>
 
   return (
     <div
@@ -79,11 +83,23 @@ const Menu = () => {
         backgroundAttachment: 'scroll',
       }}
     >
-      <FiltroProducto onFiltroChange={setFiltroCategoria} />
-      <ListProducto productos={productosFiltrados} />
+      {loading && <p className="text-white text-2xl">Cargando Productos...</p>}
+      {!loading && !error && productosFiltrados.length && (
+        <>
+          <FiltroProducto onFiltroChange={setFiltroCategoria} />
+          <ListProducto
+            productos={productosFiltrados}
+            filtroActivo={filtroCategoria}
+          />
+        </>
+      )}
+      {!loading && !error && productosFiltrados.length === 0 && (
+        <p className="text-white text-2xl">No hay productos disponibles</p>
+      )}
+      {!loading && error && <p className="text-red-500 text-2xl">{error}</p>}
 
       {/* MODAL DEL CARRITO */}
-      {cartItems.length > 0 && (
+      {hasMounted && cartItems.length > 0 && (
         <div
           className={`
                         fixed top-28 right-0 h-[80vh] w-[25%] bg-white shadow-lg z-50 rounded-l-2xl

@@ -1,35 +1,50 @@
 import { IImagenArticulo } from '@/common/types/entities/IImagenArticulo'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useField, useFormikContext } from 'formik'
 
-export default function ImagenesInputFormik({ name }: { name: string }) {
+export default function ImagenesInputFormik({
+  name,
+  esEdicion,
+}: {
+  name: string
+  esEdicion: boolean
+}) {
   const [field, , helpers] = useField<IImagenArticulo[] | string[]>({ name })
+  const { errors, touched } = useFormikContext<any>()
   const [inputUrl, setInputUrl] = useState('')
   const { setFieldTouched, validateField } = useFormikContext()
-  const [esEdicion, setEsEdicion] = useState(false)
-
-  useEffect(() => {
-    // Detecta si el primer valor ya tiene un objeto con `id` → es edición
-    if (field.value && Array.isArray(field.value)) {
-      if (typeof field.value[0] === 'object' && 'id' in field.value[0]) {
-        setEsEdicion(true)
-      }
+  const isValidUrl = (url: string) => {
+    try {
+      new URL(url)
+      return true
+    } catch {
+      return false
     }
-  }, [field.value])
+  }
 
   const agregarUrl = () => {
     const url = inputUrl.trim()
     if (!url) return
-
+    if (!isValidUrl(url)) {
+      alert('La URL no es válida')
+      return
+    }
     if (esEdicion) {
-      const nuevas: IImagenArticulo[] = [
-        ...(field.value as IImagenArticulo[]),
-        { id: null, url },
-      ]
-      helpers.setValue(nuevas)
+      const existentes = (field.value as IImagenArticulo[]).filter(
+        i => typeof i === 'object' && typeof i.url === 'string'
+      )
+
+      const yaExiste = existentes.find(img => img.url === url)
+      if (yaExiste) return
+
+      helpers.setValue([...existentes, { id: null, url }])
     } else {
-      const nuevas: string[] = [...(field.value as string[]), url]
-      helpers.setValue(nuevas)
+      const existentes = (field.value as string[]).filter(
+        i => typeof i === 'string'
+      )
+      if (existentes.includes(url)) return
+
+      helpers.setValue([...existentes, url])
     }
 
     setInputUrl('')
@@ -51,13 +66,10 @@ export default function ImagenesInputFormik({ name }: { name: string }) {
     setFieldTouched(name, true)
   }
 
-  const { errors, touched } = useFormikContext<any>()
-  console.log(errors)
-
   return (
-    <div>
+    <div className="w-full">
       <label className="block mb-1 text-white">URLs de Imágenes</label>
-      <div className="flex gap-2">
+      <div className="flex gap-2 w-full">
         <input
           type="url"
           placeholder="https://..."
@@ -68,9 +80,9 @@ export default function ImagenesInputFormik({ name }: { name: string }) {
         <button
           type="button"
           onClick={agregarUrl}
-          className="bg-blue-500 text-white px-4 py-2 rounded-full cursor-pointer hover:bg-blue-600"
+          className="bg-green-800 text-xl text-white px-2 py-1 rounded-full cursor-pointer hover:bg-green-600"
         >
-          Agregar
+          +
         </button>
       </div>
 
@@ -78,7 +90,7 @@ export default function ImagenesInputFormik({ name }: { name: string }) {
         {field.value?.map((img, index) => (
           <li
             key={index}
-            className="flex items-center justify-between bg-white p-2 rounded"
+            className="flex items-center justify-between bg-white p-2 rounded max-w-[300px]"
           >
             <span className="text-black text-sm truncate w-4/5">
               {typeof img === 'string' ? img : img.url}
@@ -86,13 +98,18 @@ export default function ImagenesInputFormik({ name }: { name: string }) {
             <button
               type="button"
               onClick={() => eliminarUrl(index)}
-              className="text-red-600 hover:underline text-sm"
+              className="text-red-600 hover:underline text-sm cursor-pointer"
             >
               Eliminar
             </button>
           </li>
         ))}
       </ul>
+      {touched[name] && errors[name] && (
+        <p className="text-red-500 text-sm font-semibold mt-2">
+          {errors[name]}
+        </p>
+      )}
     </div>
   )
 }

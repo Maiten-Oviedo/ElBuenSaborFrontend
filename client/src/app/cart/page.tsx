@@ -1,6 +1,7 @@
 'use client'
 
 import Button from '@/common/components/ui/Button'
+import { formatMessageWithBoldQuotes } from '@/common/components/ui/formatMessageWithBoldQuotes'
 import { Stepper } from '@/common/components/ui/Stepper'
 import httpClient from '@/common/lib/httpClient'
 import { useAuthStore } from '@/common/store/useAuthStore'
@@ -16,12 +17,15 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useShallow } from 'zustand/shallow'
 
 const Carrito = () => {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
 
   const cliente = useAuthStore(state => state.cliente)
+  const logout = useAuthStore(state => state.logout)
+  const [error, setError] = useState<string | null>(null)
 
   const { items, clearCart } = useCartStore(
     useShallow(state => ({
@@ -52,15 +56,31 @@ const Carrito = () => {
   const router = useRouter()
 
   const handleNextStep = async () => {
+    const { verificarStock } = useCartStore.getState()
+
     if (currentStep === 1) {
-      if (cliente) {
-        setCurrentStep(2)
-      } else {
+      if (!cliente) {
         router.push('/auth/login')
+        return
       }
+
+      // Verificar stock antes de avanzar
+      const resultado = await verificarStock()
+
+      if (!resultado.ok) {
+        toast.error(formatMessageWithBoldQuotes(resultado.message))
+        return
+      }
+
+      setCurrentStep(2)
     }
 
     if (currentStep === 2) {
+      if (domicilioSeleccionado === null) {
+        setError('Debes ingresar una dirección.')
+        return
+      }
+
       const pedidoSent = await handleSubmitPedido()
 
       if (pedidoSent === null) return
@@ -79,13 +99,18 @@ const Carrito = () => {
   }
 
   const handleSubmitPedido = async (): Promise<IPedido | null> => {
-    if (!cliente) return null
+    setError(null)
+    if (!cliente) {
+      await logout()
+      router.push('/auth/logout')
+      return null
+    }
 
     const pedido: IPedido = {
       tipoEnvioEnum: retiroSeleccionado,
       formaPagoEnum: metodoPagoSeleccionado,
       clienteId: cliente.id!,
-      domicilioId: domicilioSeleccionado,
+      domicilioId: domicilioSeleccionado!,
       indicaciones: indicaciones,
       listaDetalle: items.map(producto => ({
         cantidad: producto.cantidad,
@@ -100,13 +125,14 @@ const Carrito = () => {
 
       return response as IPedido
     } catch (error: unknown) {
-      console.log('Error al crear el pedido: ', error)
+      setError(`Error al crear el pedido: ${(error as Error).message}`)
       return null
     }
   }
 
   //UseEffect que detecta si el usuario viene de regreso de MercadoPago luego de pagar
   useEffect(() => {
+    setError(null)
     const status = searchParams.get('status')
     const fromMP = searchParams.get('collection_id')
     const idPedido = searchParams.get('external_reference')
@@ -174,7 +200,7 @@ const Carrito = () => {
           <h3>
             Agrega tu favorito desde el{' '}
             <Link href={'/menu'} className="underline text-xl">
-              Menù
+              Menú
             </Link>
           </h3>
         </div>
@@ -186,6 +212,11 @@ const Carrito = () => {
 
           {currentStep === 1 && <CartStepOne />}
           {currentStep === 2 && <CartStepTwo />}
+          {error && (
+            <p className="text-white font-bold bg-red px-2 py-1 text-lg">
+              {error}
+            </p>
+          )}
           {currentStep === 3 && pedidoSent && (
             <CartStepThree pedido={pedidoSent} />
           )}
@@ -195,7 +226,10 @@ const Carrito = () => {
               <Button
                 variant="secondary"
                 className="h-[60px]"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => {
+                  setError(null)
+                  setCurrentStep(1)
+                }}
                 href={currentStep !== 2 ? '/menu' : undefined}
               >
                 {currentStep === 2 ? '< PASO ANTERIOR' : '< VOLVER AL MENÚ'}

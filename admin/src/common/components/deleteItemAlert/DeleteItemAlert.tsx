@@ -6,8 +6,14 @@ import { IArticuloManufacturado } from '@/common/types/entities/IArticuloManufac
 
 interface Props {
   id: string
-  endpoint: string
-  deleteFunction: (id: number) => Promise<void>
+  endpoint?: string
+  deleteFunction: (id: number) => void
+}
+
+interface IBasicItem {
+  id: number
+  nombre?: string
+  denominacion?: string
 }
 
 export default function DeleteItemAlert({
@@ -17,7 +23,7 @@ export default function DeleteItemAlert({
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [itemData, setItemData] = useState<IArticuloManufacturado>()
+  const [itemData, setItemData] = useState<IBasicItem>()
   const router = useRouter()
 
   const handleDelete = async () => {
@@ -45,11 +51,11 @@ export default function DeleteItemAlert({
 
       try {
         const response = await httpClient().get(
-          `http://localhost:8080/${endpoint}/get/${id}`
+          `http://localhost:8080/${endpoint}/${id}`
         )
 
         if (response) {
-          setItemData(response as IArticuloManufacturado)
+          setItemData(response as IBasicItem)
         } else if (response.message === 'No content') {
           throw Error('No hay contenido')
         }
@@ -65,12 +71,13 @@ export default function DeleteItemAlert({
     }
 
     getItemData()
-  }, [id])
+  }, [id, endpoint])
 
   return (
     <article>
       <h2 className="text-white text-xl text-center">
-        ¿Desea eliminar el item {itemData?.denominacion}?
+        ¿Desea desactivar el item{' '}
+        {itemData?.denominacion ?? itemData?.nombre ?? itemData?.id ?? ''}?
       </h2>
       {error && <p className="text-red-500 text-center">{error}</p>}
       <nav className="w-full flex justify-around items-center gap-2">
@@ -86,7 +93,7 @@ export default function DeleteItemAlert({
           onClick={handleDelete}
           className="bg-red text-white hover:bg-white hover:text-red"
         >
-          {loading ? 'Eliminando...' : 'Eliminar'}
+          {loading ? 'Eliminando...' : 'Aceptar'}
         </Button>
       </nav>
     </article>

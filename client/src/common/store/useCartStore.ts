@@ -1,5 +1,9 @@
+'use client'
+
 import { create } from 'zustand'
 import { CartItem } from '../types/CartItem'
+import httpClient from '../lib/httpClient'
+
 
 interface CartState {
   items: CartItem[]
@@ -10,6 +14,7 @@ interface CartState {
   removeItem: (id: number) => void
   clearCart: () => void
   calculateTotal: () => void
+  verificarStock: () => Promise<{ ok: boolean; message: string }>
 }
 
 export const useCartStore = create<CartState>()((set, get) => {
@@ -91,6 +96,27 @@ export const useCartStore = create<CartState>()((set, get) => {
         0
       )
       set({ total })
+    },
+
+    verificarStock: async () => {
+      const cartItems = get().items
+      const detalles = cartItems.map(item => ({
+        id: 0, // opcional
+        cantidad: item.cantidad,
+        subTotal: item.precioVenta * item.cantidad,
+        articuloId: item.id,
+        articuloDenominacion: item.denominacion,
+      }))
+
+      try {
+        const response = await httpClient().post('http://localhost:8080/pedido/verificar-stock', {
+          body: JSON.stringify({ listaDetalle: detalles }),
+        })
+
+        return { ok: true, message: response.message || 'Stock verificado con éxito' }
+      } catch (error: any) {
+        return { ok: false, message: error.message || 'Error al verificar stock' }
+      }
     },
   }
 })

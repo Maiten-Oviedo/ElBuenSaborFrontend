@@ -1,59 +1,62 @@
-"use client";
+'use client'
 
-import { IPedido } from "@/common/types/entitites/IPedido";
-import Button from "@/common/components/ui/Button";
-import { FaFileDownload, FaInstagram, FaWhatsapp } from "react-icons/fa";
-import { useMemo } from "react";
-import Link from "next/link";
-import { BsArrowRight } from "react-icons/bs";
+import { IPedido } from '@/common/types/entitites/IPedido'
+import Button from '@/common/components/ui/Button'
+import { FaFileDownload, FaInstagram, FaWhatsapp } from 'react-icons/fa'
+import { useMemo } from 'react'
+import Link from 'next/link'
+import { BsArrowRight } from 'react-icons/bs'
 
 const calcularMensajeFinalizacion = (horaEstimadaStr: string): string => {
-  const ahora = new Date();
-  const [horasStr, minutosStr, segundosStr] = horaEstimadaStr.split(":");
-  const horas = parseInt(horasStr);
-  const minutos = parseInt(minutosStr);
-  const segundos = parseInt(segundosStr);
+  const ahora = new Date()
+  const [horasStr, minutosStr, segundosStr] = horaEstimadaStr.split(':')
+  const horas = parseInt(horasStr)
+  const minutos = parseInt(minutosStr)
+  const segundos = parseInt(segundosStr)
 
-  const final = new Date();
-  final.setHours(horas, minutos, segundos, 0);
+  const final = new Date()
+  final.setHours(horas, minutos, segundos, 0)
 
   if (final <= ahora) {
-    return "¡Tu pedido ya está disponible!";
+    return '¡Tu pedido ya está disponible!'
   }
 
-  const diferenciaMs = final.getTime() - ahora.getTime();
-  const diferenciaMin = Math.ceil(diferenciaMs / (1000 * 60));
+  const diferenciaMs = final.getTime() - ahora.getTime()
+  const diferenciaMin = Math.ceil(diferenciaMs / (1000 * 60))
 
-  const horasRestantes = Math.floor(diferenciaMin / 60);
-  const minutosRestantes = diferenciaMin % 60;
+  const horasRestantes = Math.floor(diferenciaMin / 60)
+  const minutosRestantes = diferenciaMin % 60
 
   if (horasRestantes > 0 && minutosRestantes > 0) {
     return `Estará listo en ${horasRestantes} hora${
-      horasRestantes > 1 ? "s" : ""
+      horasRestantes > 1 ? 's' : ''
     } y ${minutosRestantes} minuto${
-      minutosRestantes > 1 ? "s" : ""
-    } aproximadamente.`;
+      minutosRestantes > 1 ? 's' : ''
+    } aproximadamente.`
   } else if (horasRestantes > 0) {
     return `Estará listo en ${horasRestantes} hora${
-      horasRestantes > 1 ? "s" : ""
-    } aproximadamente.`;
+      horasRestantes > 1 ? 's' : ''
+    } aproximadamente.`
   } else {
     return `Estará listo en ${minutosRestantes} minuto${
-      minutosRestantes > 1 ? "s" : ""
-    } aproximadamente.`;
+      minutosRestantes > 1 ? 's' : ''
+    } aproximadamente.`
   }
-};
+}
 
 const CartStepThree = ({ pedido }: { pedido: IPedido }) => {
   const mensajeFinalizacion = useMemo(
     () => calcularMensajeFinalizacion(pedido.horaEstimadaFinalizacion!),
     [pedido.horaEstimadaFinalizacion]
-  );
+  )
 
   const handlePDF = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/facturas/pedido/${pedido.id}`
+        `http://localhost:8080/facturas/pedido/${pedido.id}`,
+        {
+          credentials: 'include',
+        }
       )
 
       const blob = await response.blob()
@@ -84,12 +87,12 @@ const CartStepThree = ({ pedido }: { pedido: IPedido }) => {
     <div className="text-white text-2xl p-12 bg-[#000000] rounded-3xl flex flex-col justify-center items-center">
       <h1 className="text-3xl font-bold">¡TU PEDIDO FUE APROBADO!</h1>
       <h3 className="text-xl mt-2">
-        Tu número de orden es{" "}
+        Tu número de orden es{' '}
         <span className="text-xl text-red font-bold">N°{pedido.id}</span>
       </h3>
       <p className="mt-1 mb-6 text-xl">{mensajeFinalizacion}</p>
       <Link
-        href={"/profile/ordenes"}
+        href={'/profile/ordenes'}
         className="bg-white px-8 py-1 text-center text-red font-bold text-xl rounded-full flex flex-row w-max items-center gap-3"
       >
         <span>Mis Órdenes</span> <BsArrowRight />
@@ -111,6 +114,6 @@ const CartStepThree = ({ pedido }: { pedido: IPedido }) => {
         </Button>
       )}
     </div>
-  );
-};
-export default CartStepThree;
+  )
+}
+export default CartStepThree

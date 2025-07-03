@@ -10,14 +10,14 @@ function MyForm<TValues extends Record<string, unknown>>({
   validationSchema,
   loading = false,
   error: err,
-  onSubmit,
+  onSubmit = () => {},
   fields,
   textButton = 'Enviar',
   typeButton = 'submit',
   textLeftButton = 'Cancelar',
   onButtonClick = () => {},
   onLeftButtonClick,
-  onChange,
+  designInOneColumn = false,
 }: MyFormProps<TValues>) {
   const router = useRouter()
 
@@ -32,7 +32,13 @@ function MyForm<TValues extends Record<string, unknown>>({
         const { errors, touched, values } = formikHelpers
 
         return (
-          <Form className="w-full grid grid-cols-2 gap-6 items-end">
+          <Form
+            className={`w-full ${
+              designInOneColumn
+                ? 'flex flex-col gap-2 items-center'
+                : 'grid grid-cols-2 items-end gap-6'
+            } `}
+          >
             {fields.map((field, index) => {
               const {
                 name,
@@ -48,10 +54,12 @@ function MyForm<TValues extends Record<string, unknown>>({
                 <div
                   key={name}
                   className={`${
-                    fields.length === 1 ||
-                    (fields.length % 2 === 1 && index === fields.length - 1)
+                    (fields.length === 1 ||
+                      (fields.length % 2 === 1 &&
+                        index === fields.length - 1)) &&
+                    !designInOneColumn
                       ? 'col-span-2 flex justify-center'
-                      : 'flex flex-col w-full'
+                      : 'flex flex-col w-full items-center'
                   }`}
                 >
                   <div className="flex flex-col w-full max-w-md">
@@ -129,7 +137,18 @@ function MyForm<TValues extends Record<string, unknown>>({
 
             {err && <p className="col-span-2 text-sm text-red">{err}</p>}
 
-            <div className="flex justify-around items-center col-span-2">
+            {/* Div para mostrar el objeto a medida que va cambiando */}
+            {/* <div className="col-span-2">
+              <pre className="text-white text-xs bg-black p-2 rounded-md">
+                {JSON.stringify(values, null, 2)}
+              </pre>
+            </div> */}
+
+            <div
+              className={`flex justify-around items-center ${
+                designInOneColumn ? 'gap-20' : 'col-span-2'
+              }`}
+            >
               {!loading && (
                 <Button
                   variant="primary"
@@ -149,12 +168,6 @@ function MyForm<TValues extends Record<string, unknown>>({
                 {loading ? 'Cargando...' : textButton}
               </Button>
             </div>
-
-            {/* <div className="col-span-2">
-              <pre className="text-white text-xs bg-black p-2 rounded-md">
-                {JSON.stringify(values, null, 2)}
-              </pre>
-            </div> */}
           </Form>
         )
       }}

@@ -16,12 +16,16 @@ type TabsProps = {
 };
 
 export const Tabs = ({ tabs, currentTab, onTabChange }: TabsProps) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const [internalActiveKey, setInternalActiveKey] = useState(tabs[0]?.key)
 
-  // Determinar si es controlado o no
   const isControlled = typeof currentTab === "string"
 
-  // Para no controlado: actualizar estado interno cuando cambian las pestañas
   useEffect(() => {
     if (!isControlled && tabs.length > 0) {
       setInternalActiveKey(tabs[0].key)
@@ -29,14 +33,12 @@ export const Tabs = ({ tabs, currentTab, onTabChange }: TabsProps) => {
   }, [tabs])
 
   const activeKey = isControlled ? currentTab! : internalActiveKey
-  const activeIndex = tabs.findIndex(tab => tab.key === activeKey)
 
   const handleTabChange = (key: string) => {
     if (!isControlled) setInternalActiveKey(key)
     onTabChange?.(key)
   }
 
-  // Función utilitaria para manejar color RGBA
   const hexToRgba = (hex: string, alpha: number) => {
     const sanitizedHex = hex.replace("#", "")
     const bigint = parseInt(sanitizedHex, 16)
@@ -45,6 +47,8 @@ export const Tabs = ({ tabs, currentTab, onTabChange }: TabsProps) => {
     const b = bigint & 255
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
+
+  if (!isClient) return null; // 🔒 Solución clave: evitar render hasta que esté en cliente
 
   return (
     <div>
@@ -58,7 +62,7 @@ export const Tabs = ({ tabs, currentTab, onTabChange }: TabsProps) => {
             return (
               <li key={tab.key} className="flex-1 relative h-[45px]">
                 <button
-                  onClick={() => onTabChange(tab.key)}
+                  onClick={() => handleTabChange(tab.key)}
                   className="absolute bottom-0 w-full border-b-2 rounded-t-lg transition-all duration-200 ease-in-out flex items-center justify-center font-bold"
                   style={{
                     height: isActive ? "40px" : "29px",

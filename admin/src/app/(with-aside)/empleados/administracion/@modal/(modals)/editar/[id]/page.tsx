@@ -1,141 +1,140 @@
-'use client'
+"use client";
 
-import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { useFormik } from 'formik'
-import { crearEmpleadoSchema } from '@/schemas/empleadoSchema'
-import Modal from '@/common/components/modal/Modal'
-import Button from '@/common/components/button/Button'
-import { Roles } from '../../../../../../../../../public/assets/Data/roles'
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Modal from "@/common/components/modal/Modal";
+import { editarEmpleadoSchema } from "@/schemas/empleadoSchema";
+import { useEmpleadoStore } from "@/store/storeEmpleados";
+import { EmpleadoUpdate, IEmpleado } from "@/common/types/entities/IEmpleado";
+import MyForm from "@/common/components/form/MyForm";
+import { IRol } from "@/common/types/entities/IRol";
+import { FormField } from "@/common/types/form.types";
+import { useAuthStore } from "@/store/useAuthStore";
+
+const initialValues: EmpleadoUpdate = {
+  nombre: "",
+  apellido: "",
+  telefono: "",
+  email: "",
+  activo: true,
+  rolId: 0,
+};
+
+const getEditarEmpleadoFields = (roles: IRol[]): FormField[] => [
+  {
+    name: "nombre",
+    label: "Nombre",
+    type: "text",
+  },
+  {
+    name: "apellido",
+    label: "Apellido",
+    type: "text",
+  },
+  {
+    name: "telefono",
+    label: "Teléfono",
+    type: "text",
+  },
+  {
+    name: "email",
+    label: "Correo electrónico",
+    type: "email",
+  },
+  {
+    name: "rolId",
+    label: "Rol",
+    type: "select",
+    options: roles.map((rol) => ({
+      label: rol.rolName,
+      value: rol.id!,
+    })),
+  },
+  {
+    name: "activo",
+    label: "Estado",
+    type: "checkbox",
+  },
+];
 
 export default function EditarEmpleadoModal() {
-  const router = useRouter()
-  const { id } = useParams()
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
 
-  const formik = useFormik({
-    initialValues: {
-      nombre: '',
-      apellido: '',
-      telefono: '',
-      email: '',
-      rol: '',
-    },
-    validationSchema: crearEmpleadoSchema,
-    onSubmit: async (values) => {
-      try {
-        await fetch(`http://localhost:8080/empleado/id/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id, ...values }),
-        })
-        router.back()
-      } catch (error) {
-        console.error('Error actualizando empleado:', error)
-      }
-    },
-    enableReinitialize: true,
-  })
+  const [empleado, setEmpleado] = useState<IEmpleado | null>(null);
 
-  const { values, errors, touched, handleChange, handleSubmit } = formik
+  const { updateEmpleado, fetchEmpleadoById, roles, fetchRoles } =
+    useEmpleadoStore.getState();
+
+  const usuario = useAuthStore((state) => state.empleado);
+  const setUsuario = useAuthStore((state) => state.setEmpleado);
 
   useEffect(() => {
-    const fetchEmpleado = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/empleado/id/${id}`)
-        const data = await res.json()
+        await fetchRoles();
+        const data = await fetchEmpleadoById(Number(id));
 
-        formik.setValues({
-          nombre: data.nombre || '',
-          apellido: data.apellido || '',
-          telefono: data.telefono || '',
-          email: data.email || '',
-          rol: data.rol || '',
-        })
-
-        setLoading(false)
+        if (data) {
+          setEmpleado(data);
+        }
       } catch (error) {
-        console.error('Error obteniendo empleado:', error)
+        console.error("Error obteniendo datos:", error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (id) fetchData();
+  }, [id]);
+
+  const handleSubmit = async (values: EmpleadoUpdate) => {
+    try {
+      await updateEmpleado(Number(id), values);
+
+      router.back();
+    } catch (error) {
+      console.error("Error actualizando empleado:", error);
+      alert("Hubo un problema al actualizar el empleado");
     }
+  };
 
-    if (id) fetchEmpleado()
-  }, [id])
+  useEffect(() => {
+    if (usuario) {
+      console.log(usuario);
+    }
+  }, [id]);
 
-  if (loading) {
+  if (loading || !empleado) {
     return (
       <Modal>
         <p className="text-white text-center">Cargando empleado...</p>
       </Modal>
-    )
+    );
   }
 
   return (
     <Modal>
-      <h2 className="text-white text-3xl font-bold text-center mb-4">EDITAR EMPLEADO</h2>
+      <h2 className="text-white text-3xl font-bold text-center mb-4">
+        EDITAR EMPLEADO
+      </h2>
 
-      <form onSubmit={handleSubmit} className="w-full grid gap-4">
-        <InputCampo name="nombre" placeholder="Nombre" {...bindField(formik, 'nombre')} />
-        <InputCampo name="apellido" placeholder="Apellido" {...bindField(formik, 'apellido')} />
-        <InputCampo name="telefono" placeholder="Teléfono" {...bindField(formik, 'telefono')} />
-        <InputCampo name="email" placeholder="Email" {...bindField(formik, 'email')} />
-
-        <div className="mb-4">
-          <select
-            name="rol"
-            value={values.rol}
-            onChange={handleChange}
-            className={`w-full rounded-full px-4 py-2 text-white border-2 ${errors.rol && touched.rol ? "border-red-500" : "border-white"
-              } bg-transparent`}
-          >
-            <option value="" className="text-black">Selecciona un rol</option>
-            {Roles.map((rol) => (
-              <option key={rol.denominacion} value={rol.denominacion} className="text-black">
-                {rol.denominacion}
-              </option>
-            ))}
-          </select>
-          {errors.rol && touched.rol && (
-            <p className="text-red-500 text-sm mt-1">{errors.rol}</p>
-          )}
-        </div>
-
-        <Button
-          type="submit"
-        >
-          Guardar Cambios
-        </Button>
-      </form>
-    </Modal>
-  )
-}
-
-// Input reusado
-function InputCampo({ name, type = 'text', placeholder, value, onChange, error, touched }: any) {
-  return (
-    <div className="mb-2">
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className={`w-full rounded-full px-4 py-2 text-white border-2 ${error && touched ? 'border-red-500' : 'border-white'
-          } bg-transparent`}
+      <MyForm
+        initialValues={{
+          nombre: empleado.nombre || "",
+          apellido: empleado.apellido || "",
+          telefono: empleado.telefono || "",
+          email: empleado.email || "",
+          activo: empleado.activo ?? true,
+          rolId: empleado.rol?.id ?? 0,
+        }}
+        validationSchema={editarEmpleadoSchema}
+        onSubmit={handleSubmit}
+        fields={getEditarEmpleadoFields(roles)}
+        textButton="Guardar Cambios"
+        textLeftButton="Cancelar"
       />
-      {error && touched && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
-  )
-}
-
-// Simplifica el acceso a formik
-function bindField(formik: any, field: string) {
-  return {
-    value: formik.values[field],
-    onChange: formik.handleChange,
-    error: formik.errors[field],
-    touched: formik.touched[field],
-  }
+    </Modal>
+  );
 }

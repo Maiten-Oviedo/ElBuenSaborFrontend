@@ -7,9 +7,9 @@ import type { IArticuloManufacturado } from '@/common/types/entities/IArticuloMa
 import FormRecetaManufacturado from '@/features/modalManufacturado/FormRecetaManufacturado'
 
 import {
-  crearManufacturadoSchemaStepTwo,
   crearManufacturadoSchemaStepThree,
   crearManufacturadoSchemaStepFour,
+  crearManufacturadoSchemaStepTwo,
 } from '@/schemas/crearManufacturadoSchema'
 import { useEffect } from 'react'
 import { useStoreManufacturados } from '@/store/storeManufacturados'
@@ -31,7 +31,9 @@ import { BUTTON_TEXTS } from '@/common/lib/constants/manufacturadoSteps'
 import { PrecioCostoDisplay } from '@/common/components/manufacturado/PrecioCostoDisplay'
 import Button from '@/common/components/button/Button'
 import CategoriaSelector from '@/features/modalManufacturado/FormCategoriaManufacturado'
-import { IImagenArticulo } from '@/common/types/entities/IImagenArticulo'
+import ImagenesInputFormik from '@/features/modalInsumo/ImagenesInputFormik'
+import { IStepTwoValues } from '@/common/types/form.types'
+import PrecioOMargenGroup from '@/features/modalInsumo/PrecioOMargenField'
 
 export default function EditarProductoModal() {
   const router = useRouter()
@@ -41,11 +43,6 @@ export default function EditarProductoModal() {
   const updateManufacturado = useStoreManufacturados(state => state.update)
 
   const product = data.find(item => item.id === Number(id))
-
-  if (product === undefined) {
-    alert('Articulo no encontrado en la base de datos :(')
-    router.back()
-  }
 
   // Hook para manejar insumos
   const { getInsumos } = useInsumos()
@@ -70,6 +67,7 @@ export default function EditarProductoModal() {
     handleFormThreeChange,
     handleBackFromStepThree,
     validateStepTwo,
+    setFormOneValues,
   } = useManufacturadoForm(getInitialValuesForEdit(product!))
 
   // Hook personalizado para cálculos
@@ -89,35 +87,44 @@ export default function EditarProductoModal() {
 
   const insumosOptions = createInsumosOptions(insumos)
 
-  const handleSubmitStepTwo = async (values: {
-    denominacion: string
-    imagenesUrls: IImagenArticulo[]
-    descripcion: string
-    productoActivo: string
-  }) => {
-    const transformedValues = transformStepTwoValuesForEdit(values, product!)
-    setFormTwoValues(transformedValues)
+  const handleSubmitStepTwo = async (values: IStepTwoValues) => {
+    setFormTwoValues({
+      denominacion: values.denominacion,
+      descripcion: values.descripcion,
+      productoActivo: values.productoActivo,
+      imagenesUrls: values.imagenesUrls,
+      esVendible: values.esVendible,
+    })
     setCurrentStep(3)
   }
 
-  const handleSubmitStepFour = async (values: any) => {
+  const handleSubmitStepFour = async (values: {
+    margen: number | null
+    precioVenta: number
+    tiempoEstimadoMinutos: number
+    precioCosto: number
+  }) => {
     setError(null)
     setLoading(true)
 
+    const stepTwoTransformed = transformStepTwoValuesForEdit(
+      formTwoValues,
+      product!
+    )
+
     const completeManufacturado: IArticuloManufacturado = {
       ...formOneValues,
-      ...formTwoValues,
+      ...stepTwoTransformed,
       ...formThreeValues,
       ...values,
-      productoActivo: formTwoValues.productoActivo === 'true',
       id: product?.id,
     }
-    console.log('EL BODY', completeManufacturado)
 
+    console.log('BODY DE EDIT: ', completeManufacturado)
     try {
-      updateManufacturado(completeManufacturado)
+      await updateManufacturado(completeManufacturado)
       router.back()
-    } catch (error) {
+    } catch (error: unknown) {
       setError(
         `Error al editar el item. ${JSON.stringify(
           (error as Error).message
@@ -129,6 +136,8 @@ export default function EditarProductoModal() {
   }
 
   const handleStepperButton = (newStep: number) => {
+    if (newStep > currentStep) {
+    }
     setCurrentStep(newStep)
   }
 
@@ -152,6 +161,9 @@ export default function EditarProductoModal() {
               id: product?.categoriaId,
               denominacion: product?.categoriaDenominacion,
             }}
+            onCategoriaSeleccionada={categoriaId =>
+              setFormOneValues({ categoriaId })
+            }
           />
           <nav className="flex justify-between items-center">
             <Button
@@ -171,8 +183,8 @@ export default function EditarProductoModal() {
       )}
 
       {currentStep === 2 && (
-        <MyForm
-          initialValues={formTwoValues}
+        <MyForm<IStepTwoValues>
+          initialValues={formTwoValues as IStepTwoValues}
           validationSchema={crearManufacturadoSchemaStepTwo}
           loading={loading}
           error={error}
@@ -182,14 +194,13 @@ export default function EditarProductoModal() {
           typeButton="button"
           textLeftButton={BUTTON_TEXTS.EDIT.BACK}
           onButtonClick={(formikHelpers, values) => {
-            console.log('FORMIK HELPERS: ', formikHelpers)
-            console.log('VALUES : ', values)
             validateStepTwo(values, formikHelpers, handleSubmitStepTwo)
           }}
           onLeftButtonClick={() => setCurrentStep(1)}
-        />
+        >
+          <ImagenesInputFormik name="imagenesUrls" esEdicion={true} />
+        </MyForm>
       )}
-
       {currentStep === 3 && (
         <FormRecetaManufacturado
           initialValues={tempFormThreeValues} // Usar el estado temporal que persiste
@@ -198,8 +209,8 @@ export default function EditarProductoModal() {
           insumosOptions={insumosOptions}
           textButton={BUTTON_TEXTS.EDIT.STEP_1_2_3}
           textLeftButton={BUTTON_TEXTS.EDIT.BACK}
-          onLeftButtonClick={handleBackFromStepThree} // Usar el handler mejorado
-          onFormChange={handleFormThreeChange} // Usar el handler mejorado
+          onLeftButtonClick={handleBackFromStepThree}
+          onFormChange={handleFormThreeChange}
         />
       )}
 
@@ -218,15 +229,24 @@ export default function EditarProductoModal() {
             loading={loading}
             error={error}
             onSubmit={values => {
-              setFormFourValues(values)
-              handleSubmitStepFour(values)
+              const parsedValues = {
+                ...values,
+                margen: values.margen ?? null,
+                precioVenta: values.precioVenta ?? 0,
+              }
+
+              setFormFourValues(parsedValues)
+              handleSubmitStepFour(parsedValues)
             }}
-            fields={getManufacturadoFieldsStepFour(formFourValues.precioCosto)}
+            fields={getManufacturadoFieldsStepFour()}
             textButton={BUTTON_TEXTS.EDIT.STEP_4}
             typeButton="submit"
             textLeftButton={BUTTON_TEXTS.EDIT.BACK}
             onLeftButtonClick={() => setCurrentStep(3)}
-          />
+            designInOneColumn
+          >
+            <PrecioOMargenGroup />
+          </MyForm>
         </>
       )}
     </Modal>

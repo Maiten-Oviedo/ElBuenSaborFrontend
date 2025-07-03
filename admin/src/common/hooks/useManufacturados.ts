@@ -18,9 +18,9 @@ export const useManufacturados = () => {
     useShallow(state => ({
       data: state.data,
       setData: state.setData,
-      createManufacturado: state.createManufacturado,
-      updateManufacturado: state.updateManufacturado,
-      deleteManufacturado: state.deleteManufacturado,
+      createManufacturado: state.create,
+      updateManufacturado: state.update,
+      deleteManufacturado: state.remove,
     }))
   )
 

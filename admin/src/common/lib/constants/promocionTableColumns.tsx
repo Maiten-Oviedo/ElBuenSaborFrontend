@@ -26,5 +26,9 @@ export const promocionTableColumns: ITableColumn<IArticuloPromocion>[] = [
     },
     { label: 'Válido desde', key: 'fechaDesde' },
     { label: 'Válido hasta', key: 'fechaHasta' },
+    { label: 'Hora Desde', key: 'horaDesde'},
+    {  label: 'Hora Hasta', key: 'horaHasta'},
+    {  label: 'Estado', key: 'productoActivo'},
     { label: 'Acciones', key: 'acciones' },
 ];
+

@@ -4,17 +4,24 @@ import { useStoreInsumos } from '@/store/storeInsumos'
 import { useShallow } from 'zustand/shallow'
 
 export const useInsumos = () => {
-  const { data, setData, createInsumo, updateInsumo, deleteInsumo } =
-    useStoreInsumos(
-      useShallow(state => ({
-        data: state.data,
-        setData: state.setData,
-        createInsumo: state.createInsumo,
-        updateInsumo: state.updateInsumo,
-        deleteInsumo: state.deleteInsumo,
-        comprarInsumo: state.comprarInsumo,
-      }))
-    )
+  const {
+    data,
+    setData,
+    createInsumo,
+    updateInsumo,
+    deleteInsumo,
+    reactivateInsumo,
+  } = useStoreInsumos(
+    useShallow(state => ({
+      data: state.data,
+      setData: state.setData,
+      createInsumo: state.createInsumo,
+      updateInsumo: state.updateInsumo,
+      deleteInsumo: state.deleteInsumo,
+      comprarInsumo: state.comprarInsumo,
+      reactivateInsumo: state.reactivateInsumo,
+    }))
+  )
 
   const getInsumos = async () => {
     try {
@@ -35,10 +42,6 @@ export const useInsumos = () => {
   }
 
   const postInsumo = async (newInsumo: IArticuloInsumo) => {
-    //Esto se llama optimistic update:
-    //Se agrega al estado de zustand el insumo nuevo antes de esperar la respuesta del backend,
-    //para mejorar la experiencia de usuario
-
     try {
       const response = (await httpClient().post(
         'http://localhost:8080/articulo-insumo',
@@ -48,15 +51,7 @@ export const useInsumos = () => {
       )) as IArticuloInsumo
       createInsumo(response)
     } catch (error: unknown) {
-      //Si la petición sale mal, primero que nada se revierte lo que hicimos con el estado
-      deleteInsumo(newInsumo.id!)
-      //Luego se devuelve error
-      let errorMessage = 'Error desconocido'
-
-      if (error instanceof Error) {
-        errorMessage = error.message
-      }
-      throw new Error(errorMessage)
+      throw error
     }
   }
 
@@ -80,30 +75,18 @@ export const useInsumos = () => {
       if (estadoPrevio) {
         updateInsumo(estadoPrevio)
       }
-      //Luego se devuelve error
-      let errorMessage = 'Error desconocido'
-
-      if (error instanceof Error) {
-        errorMessage = error.message
-      }
-      throw new Error(errorMessage)
+      throw error
     }
   }
 
   const deleteInsumoById = async (id: number) => {
-    const estadoPrevio: IArticuloInsumo | undefined = data.find(
-      insumo => insumo.id === id
-    )
-
     try {
       await httpClient().del(`http://localhost:8080/articulo-insumo/${id}`)
       //Optimistic update
       deleteInsumo(id)
     } catch (error) {
       //Si la petición sale mal, se revierte lo que hicimos con el estado, chequeando que estadoPrevio no sea undefined
-      if (estadoPrevio) {
-        postInsumo(estadoPrevio)
-      }
+      reactivateInsumo(id)
 
       //Luego se devuelve error
       let errorMessage = 'Error desconocido'
@@ -129,23 +112,14 @@ export const useInsumos = () => {
     }
 
     try {
-      const response = await fetch(
+      const data = await httpClient().patch(
         `http://localhost:8080/articulo-insumo/${id}/precio-stock`,
         {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify(body),
         }
       )
 
-      if (!response.ok) {
-        throw new Error('Error al actualizar el producto')
-      }
-
-      const data = await response.json()
-      alert('Producto actualizado:' + data)
+      alert('Producto actualizado correctamente')
     } catch (error) {
       console.error('Error en la petición PATCH:', error)
     }

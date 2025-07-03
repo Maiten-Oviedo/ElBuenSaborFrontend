@@ -7,7 +7,13 @@ interface InsumosStore {
   createInsumo: (insumo: IArticuloInsumo) => void
   updateInsumo: (insumo: IArticuloInsumo) => void
   deleteInsumo: (id: number) => void
-  comprarInsumo:(id: number, stockActual: number, nuevoStock: number, precioCompra: number) => void
+  reactivateInsumo: (id: number) => void
+  comprarInsumo: (
+    id: number,
+    stockActual: number,
+    nuevoStock: number,
+    precioCompra: number
+  ) => void
 }
 
 export const useStoreInsumos = create<InsumosStore>()(set => ({
@@ -27,22 +33,35 @@ export const useStoreInsumos = create<InsumosStore>()(set => ({
 
   deleteInsumo: id =>
     set(state => {
-      const newData = state.data.filter(insumo => insumo.id !== id)
+      const newData = state.data.map(insumo =>
+        insumo.id === id
+          ? { ...insumo, productoActivo: false, esVendible: false }
+          : insumo
+      )
       return { data: newData }
     }),
 
-      comprarInsumo: (id, stockActual, nuevoStock, precioCompra) =>
+  reactivateInsumo: id =>
+    set(state => {
+      const newData = state.data.map(insumo =>
+        insumo.id === id
+          ? { ...insumo, productoActivo: true, esVendible: true }
+          : insumo
+      )
+      return { data: newData }
+    }),
+
+  comprarInsumo: (id, stockActual, nuevoStock, precioCompra) =>
     set(state => {
       const newData = state.data.map(insumo =>
         insumo.id === id
           ? {
               ...insumo,
               stock: stockActual + nuevoStock,
-              precioCompra: precioCompra
+              precioCompra: precioCompra,
             }
           : insumo
       )
       return { data: newData }
-    })
-
+    }),
 }))

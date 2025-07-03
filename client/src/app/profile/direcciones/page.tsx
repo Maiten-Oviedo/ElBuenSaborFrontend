@@ -6,7 +6,6 @@ import { ICliente } from '@/common/types/entitites/ICliente'
 import { IDomicilio } from '@/common/types/entitites/IDomicilio'
 import { DireccionCard } from '@/features/profile/DireccionCard'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { BiPlus } from 'react-icons/bi'
 import { RxReload } from 'react-icons/rx'
@@ -34,7 +33,7 @@ const MisDomicilios = () => {
         }
 
         const response = (await httpClient().get(
-          `http://localhost:8080/cliente/${cliente.id}/domicilios`
+          `http://localhost:8080/cliente/${cliente.id}/domicilios/getAll`
         )) as IDomicilio[]
 
         //Se ordena alfabéticamente por calle y número

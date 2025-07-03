@@ -3,7 +3,7 @@
 import MyForm from '@/common/components/ui/forms/MyForm'
 import ParallelModal from '@/common/components/ui/parallel-modal/ParallelModal'
 import httpClient from '@/common/lib/httpClient'
-import { crearDomicilioSchema } from '@/common/schemas/crearDomicilioSchema'
+import { crearDomicilioSchema } from '@/common/schemas/domicilioSchema'
 import { useAuthStore } from '@/common/store/useAuthStore'
 import { useReloadStore } from '@/common/store/useReloadStore'
 import {
@@ -49,14 +49,7 @@ const CrearDomicilioModal = () => {
       toggleReload()
       router.back()
     } catch (error: unknown) {
-      let errorMessage = 'Error desconocido'
-
-      if (error instanceof Error) {
-        errorMessage = error.message
-      }
-
-      setError(errorMessage)
-      throw new Error(errorMessage)
+      setError(`Error al crear Direccion: ${(error as Error).message}`)
     } finally {
       setLoading(false)
     }

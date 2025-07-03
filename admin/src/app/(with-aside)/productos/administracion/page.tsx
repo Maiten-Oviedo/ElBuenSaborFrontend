@@ -10,6 +10,7 @@ export default function Page() {
 
   const getAll = useStoreManufacturados(state => state.getAll)
   const data = useStoreManufacturados(state => state.data)
+  console.log('DATA', data)
   const shouldRefresh = useStoreManufacturados(state => state.shouldRefresh)
   const setShouldRefresh = useStoreManufacturados(
     state => state.setShouldRefresh

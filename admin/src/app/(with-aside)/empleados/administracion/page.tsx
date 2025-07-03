@@ -1,36 +1,28 @@
-"use client";
+'use client'
 
-import Button from '@/common/components/button/Button'
 import GenericTable from '@/common/components/generic table/GenericTable'
-import React, { useEffect, useState } from 'react'
-import type { IEmpleado } from '@/common/types/entities/IEmpleado';
-import { empleadosTableColumns } from '@/common/lib/constants/empleadosTablesColumns';
-type Props = {}
+import React, { useEffect } from 'react'
+import { empleadosTableColumns } from '@/common/lib/constants/empleadosTablesColumns'
+import { useEmpleadoStore } from '@/store/storeEmpleados'
 
-const Page = (props: Props) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-  const [empleados, setEmpleados] = useState<IEmpleado[]>([])
-  
+const Page = () => {
+  const { empleados, fetchEmpleados, isLoading, error } = useEmpleadoStore()
+
   useEffect(() => {
-    fetch('http://localhost:8080/empleados')
-      .then(response => {
-        if (!response.ok) throw new Error('Error en la solicitud');
-        return response.json();
-      })
-      .then(data => setEmpleados(data))
-      .catch(error => console.error(error))
-      .finally(() => setIsLoading(false));
-  }, []);
+    const getData = async () => {
+      await fetchEmpleados()
+    }
+    getData()
+  }, [])
 
-  console.log("empleados" , empleados)
-
-  if (isLoading) return <p>Cargando productos...</p>;
+  useEffect(() => {
+    console.log(empleados)
+  }, [empleados])
 
   return (
     <div>
       <GenericTable
-        section='administracion'
+        section="administracion"
         dataType="empleados"
         error={error}
         isLoading={isLoading}

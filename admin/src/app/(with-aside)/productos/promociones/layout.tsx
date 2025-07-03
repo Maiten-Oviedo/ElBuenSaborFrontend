@@ -4,7 +4,7 @@ import { BiPlus } from 'react-icons/bi'
 
 export default function ProductosAdminLayout({
   children,
-  modal, // ← aquí Next inyecta el contenido de @modal
+  modal,
 }: {
   children: React.ReactNode
   modal: React.ReactNode
@@ -20,7 +20,7 @@ export default function ProductosAdminLayout({
           <BiPlus className="size-8" /> <span>Nueva Promocion</span>
         </Link>
       </header>
-      <section className='w-full h-full'>{children}</section>
+      <section>{children}</section>
 
       {modal}
     </>

@@ -4,7 +4,6 @@ import MyForm from '@/common/components/form/MyForm'
 import Modal from '@/common/components/modal/Modal'
 import { Stepper } from '@/common/components/stepper/Stepper'
 import { useInsumos } from '@/common/hooks/useInsumos'
-import httpClient from '@/common/lib/httpClient'
 import type { IArticuloManufacturado } from '@/common/types/entities/IArticuloManufacturado'
 import FormRecetaManufacturado from '@/features/modalManufacturado/FormRecetaManufacturado'
 import {
@@ -31,10 +30,11 @@ import { useManufacturadoCalculations } from '@/common/hooks/useManufacturadoCal
 import { useManufacturadoForm } from '@/common/hooks/useManufacturadoForm'
 import { PrecioCostoDisplay } from '@/common/components/manufacturado/PrecioCostoDisplay'
 import { ManufacturadoHeader } from '@/common/components/manufacturado/ManufacturadoHeader'
-import CategorySelector from '@/common/components/categoriaSelector/CategoriaSelector'
-import { useStoreCategoriasManufacturados } from '@/store/storeCategoriasManufacturados'
 import Button from '@/common/components/button/Button'
 import CategoriaSelector from '@/features/modalManufacturado/FormCategoriaManufacturado'
+import ImagenesInputFormik from '@/features/modalInsumo/ImagenesInputFormik'
+import { IStepTwoValues } from '@/common/types/form.types'
+import PrecioOMargenGroup from '@/features/modalInsumo/PrecioOMargenField'
 
 export default function CrearProductoModal() {
   const router = useRouter()
@@ -60,11 +60,11 @@ export default function CrearProductoModal() {
     setCurrentStep,
     setLoading,
     setError,
-    handleSubmitStepOne,
     handleSubmitStepThree,
     handleFormThreeChange, // Nuevo handler
     handleBackFromStepThree, // Nuevo handler
     validateStepTwo,
+    setFormOneValues,
   } = useManufacturadoForm(INITIAL_VALUES_CREATE)
 
   // Hook personalizado para cálculos
@@ -88,29 +88,31 @@ export default function CrearProductoModal() {
 
   const insumosOptions = createInsumosOptions(insumos)
 
-  const handleSubmitStepTwo = async (values: {
-    denominacion: string
-    imagenesUrlsInput: string
-    descripcion: string
-    productoActivo: string
-  }) => {
-    const transformedValues = transformStepTwoValues(values)
-    setFormTwoValues(transformedValues)
+  const handleSubmitStepTwo = async (values: IStepTwoValues) => {
+    setFormTwoValues({
+      denominacion: values.denominacion,
+      descripcion: values.descripcion,
+      productoActivo: values.productoActivo,
+      imagenesUrls: values.imagenesUrls,
+      esVendible: values.esVendible,
+    })
     setCurrentStep(3)
   }
 
-  const handleSubmitStepFour = async (
-    values: typeof INITIAL_VALUES_CREATE.stepFour
-  ) => {
+  const handleSubmitStepFour = async (values: {
+    precioCosto: number
+    precioVenta: number
+    tiempoEstimadoMinutos: number
+    margen: number | null
+  }) => {
     setError(null)
     setLoading(true)
-
+    const stepTwoTransformed = transformStepTwoValues(formTwoValues)
     const completeManufacturado: IArticuloManufacturado = {
       ...formOneValues,
-      ...formTwoValues,
+      ...stepTwoTransformed,
       ...formThreeValues,
       ...values,
-      productoActivo: formTwoValues.productoActivo === 'true',
     }
 
     try {
@@ -118,9 +120,7 @@ export default function CrearProductoModal() {
       router.back()
     } catch (error) {
       setError(
-        `Error al crear el item. ${JSON.stringify(
-          (error as Error).message
-        )}:${JSON.stringify((error as Error).cause)}`
+        `Error al crear el item. ${JSON.stringify((error as Error).message)}`
       )
     } finally {
       setLoading(false)
@@ -134,7 +134,11 @@ export default function CrearProductoModal() {
 
       {currentStep === 1 && (
         <>
-          <CategoriaSelector />
+          <CategoriaSelector
+            onCategoriaSeleccionada={categoriaId =>
+              setFormOneValues({ categoriaId })
+            }
+          />
           <nav className="flex justify-between items-center">
             <Button
               onClick={() => router.back()}
@@ -158,29 +162,39 @@ export default function CrearProductoModal() {
           validationSchema={crearManufacturadoSchemaStepTwo}
           loading={loading}
           error={error}
-          onSubmit={() => {}}
+          onSubmit={values => {
+            // Si hay errores, Formik no ejecuta esto
+            handleSubmitStepTwo(values)
+          }}
           fields={manufacturadoFieldsStepTwo}
           textButton={BUTTON_TEXTS.CREATE.STEP_1_2_3}
-          typeButton="button"
+          typeButton="submit"
           textLeftButton={BUTTON_TEXTS.CREATE.BACK}
-          onButtonClick={(formikHelpers, values) =>
+          onButtonClick={(formikHelpers, values) => {
             validateStepTwo(values, formikHelpers, handleSubmitStepTwo)
-          }
+          }}
           onLeftButtonClick={() => setCurrentStep(1)}
-        />
+        >
+          <div>
+            <ImagenesInputFormik name="imagenesUrls" esEdicion={false} />
+          </div>
+        </MyForm>
       )}
 
       {currentStep === 3 && (
-        <FormRecetaManufacturado
-          initialValues={tempFormThreeValues} // Usar el estado temporal que persiste
-          validationSchema={crearManufacturadoSchemaStepThree}
-          onSubmit={handleSubmitStepThree}
-          insumosOptions={insumosOptions}
-          textButton={BUTTON_TEXTS.CREATE.STEP_1_2_3}
-          textLeftButton={BUTTON_TEXTS.CREATE.BACK}
-          onLeftButtonClick={handleBackFromStepThree} // Usar el handler mejorado
-          onFormChange={handleFormThreeChange} // Usar el handler mejorado
-        />
+        <>
+          <FormRecetaManufacturado
+            initialValues={tempFormThreeValues} // Usar el estado temporal que persiste
+            validationSchema={crearManufacturadoSchemaStepThree}
+            onSubmit={handleSubmitStepThree}
+            insumosOptions={insumosOptions}
+            textButton={BUTTON_TEXTS.CREATE.STEP_1_2_3}
+            textLeftButton={BUTTON_TEXTS.CREATE.BACK}
+            onLeftButtonClick={handleBackFromStepThree}
+            onFormChange={handleFormThreeChange} // Usar el handler mejorado
+            error={error}
+          />
+        </>
       )}
 
       {currentStep === 4 && (
@@ -198,15 +212,24 @@ export default function CrearProductoModal() {
             loading={loading}
             error={error}
             onSubmit={values => {
-              setFormFourValues(values)
-              handleSubmitStepFour(values)
+              const parsedValues = {
+                ...values,
+                margen: values.margen ?? null,
+                precioVenta: values.precioVenta ?? 0,
+              }
+
+              setFormFourValues(parsedValues)
+              handleSubmitStepFour(parsedValues)
             }}
-            fields={getManufacturadoFieldsStepFour(formFourValues.precioCosto)}
+            fields={getManufacturadoFieldsStepFour()}
             textButton={BUTTON_TEXTS.CREATE.STEP_4}
             typeButton="submit"
             textLeftButton={BUTTON_TEXTS.CREATE.BACK}
             onLeftButtonClick={() => setCurrentStep(3)}
-          />
+            designInOneColumn
+          >
+            <PrecioOMargenGroup />
+          </MyForm>
         </>
       )}
     </Modal>

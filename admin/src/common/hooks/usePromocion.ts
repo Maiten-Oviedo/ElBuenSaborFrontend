@@ -1,11 +1,10 @@
-import { useState } from "react"
-import httpClient from "../lib/httpClient"
-import {
-  transformPromocionValuesForBackend,
-} from "../lib/promocionUtils"
-import { FormStepOneValues, FormStepThreeValues, FormStepTwoValues } from "../types/form.types"
+import httpClient from '../lib/httpClient'
+import { useStorePromociones } from '@/store/storePromocion'
 
 export type ProductoOption = {
+  id?: number
+  articuloDenominacion?: string
+  cantidad?: number
   label: string
   value: number
   precioCosto: number
@@ -13,59 +12,80 @@ export type ProductoOption = {
   tiempoEstimadoMinutos: number
 }
 
+export const createPromocion = async (payload: any) => {
+  try {
+    const data = await httpClient().post(
+      'http://localhost:8080/articulo-promocion',
+      {
+        body: JSON.stringify(payload),
+      }
+    )
+
+    // Llama al store para refrescar la tabla
+    const { getAll } = useStorePromociones.getState()
+    await getAll()
+
+    return data
+  } catch (error: any) {
+    console.error('Error al crear promoción:', error)
+    throw new Error(error.message || 'Error al crear la promoción')
+  }
+}
+
+export const updatePromocion = async (id: string, payload: any) => {
+  try {
+    const data = await httpClient().put(
+      `http://localhost:8080/articulo-promocion/${id}`,
+      {
+        body: JSON.stringify(payload),
+      }
+    )
+
+    // Llama al store para refrescar la tabla
+    const { getAll } = useStorePromociones.getState()
+    await getAll()
+    return data
+  } catch (error: any) {
+    console.error('Error al actualizar promoción:', error)
+    throw new Error(error.message || 'Error al actualizar promoción')
+  }
+}
+
 export const getProductosOptions = async (): Promise<ProductoOption[]> => {
   try {
-    const [resManufacturados, resBebidas] = await Promise.all([
-      fetch('http://localhost:8080/articulo-manufacturado/getAll'),
-      fetch('http://localhost:8080/articulo-insumo/bebidas/getAll'),
+    const [dataManufacturados, dataVendibles] = await Promise.all([
+      httpClient().get('http://localhost:8080/articulo-manufacturado/getAll'),
+      httpClient().get(
+        'http://localhost:8080/articulo-insumo/vendibles/basic/getAll'
+      ),
     ])
 
-    if (!resManufacturados.ok || !resBebidas.ok) {
-      throw new Error('Error al obtener productos o bebidas')
-    }
+    const todos = [...dataManufacturados, ...dataVendibles]
 
-    const dataManufacturados = await resManufacturados.json()
-    const dataBebidas = await resBebidas.json()
+    const options: ProductoOption[] = todos.map((p: any) => ({
+      value: p.id,
+      label: p.denominacion,
+      precioCosto: p.precioCosto ?? 0,
+      precioVenta: p.precioVenta,
+      tiempoEstimadoMinutos: p.tiempoEstimadoMinutos ?? 0,
+    }))
 
-    const allProducts = [...dataManufacturados, ...dataBebidas]
-
-    const options: ProductoOption[] = allProducts.map((producto: any) => ({
-      value: producto.id,
-      label: producto.denominacion,
-      precioCosto: producto.precioCosto ?? 0,
-      precioVenta: producto.precioVenta,
-      tiempoEstimadoMinutos: producto.tiempoEstimadoMinutos ?? 0, // para bebidas puede que no exista
-    })).sort((a, b) => a.label.localeCompare(b.label))
-
-    return options
+    return options.sort((a, b) => a.label.localeCompare(b.label))
   } catch (error) {
-    console.error('Error al cargar productos:', error)
+    console.error('Error al obtener productos:', error)
     return []
   }
 }
 
-export const usePromocion = () => {
-  const createPromocion = async (formOneValues: FormStepOneValues, formTwoValues: FormStepTwoValues, finalValues: FormStepThreeValues) => {
-    try {
-      const payload = transformPromocionValuesForBackend(
-        formOneValues,
-        formTwoValues,
-        finalValues
-      )
+export const getPromocionById = async (id: string) => {
+  try {
+    const promocion = await httpClient().get(
+      `http://localhost:8080/articulo-promocion/${id}`
+    )
 
-      await httpClient().post("http://localhost:8080/articulo-promocion", {
-        body: JSON.stringify(payload),
-      })
-      console.log("✅ Producto enviado: ", payload)
-
-      return { success: true }
-    } catch (err) {
-      console.error("❌ Error al crear promoción:", err)
-      return { success: false, error: err }
-    }
-  }
-
-  return {
-    createPromocion,
+    return promocion
+  } catch (error) {
+    console.error('Error al obtener promoción:', error)
+    throw new Error((error as any).message || 'Error al obtener la promoción')
   }
 }

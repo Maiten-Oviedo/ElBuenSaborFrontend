@@ -8,4 +8,5 @@ export interface Producto {
   productoActivo: boolean
   //relaciones
   categoriaDenominacion?: string
+  categoriaPadre: string
 }

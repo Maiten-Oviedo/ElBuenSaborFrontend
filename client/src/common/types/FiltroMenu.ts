@@ -1,31 +1,41 @@
+import { Producto } from './Producto'
+
 export type FiltroMenu =
   | 'TODO'
   | 'HAMBURGUESAS'
   | 'SIDES'
   | 'BEBIDAS'
   | 'PROMOS'
+  | 'OTROS'
 
-export const categoriaMap: Record<FiltroMenu, number | number[] | null> = {
-  TODO: null,
-  HAMBURGUESAS: 3,
-  SIDES: 16,
-  BEBIDAS: [11, 12, 13, 14, 15],
-  PROMOS: [17, 18, 19],
-}
+export const filtrarPorMenu = (
+  filtro: FiltroMenu,
+  producto: Producto
+): boolean => {
+  const padre = producto.categoriaPadre?.toUpperCase()
+  const denominacion = producto.categoriaDenominacion?.toUpperCase()
 
-export const idCategoriaMap: Record<number, string> = {
-  3: 'HAMBURGUESAS',
-  16: 'SIDES',
-  11: 'BEBIDAS',
-  12: 'BEBIDAS',
-  13: 'BEBIDAS',
-  14: 'BEBIDAS',
-  15: 'BEBIDAS',
-  17: 'PROMOS',
-  18: 'PROMOS',
-  19: 'PROMOS',
-}
+  switch (filtro) {
+    case 'TODO':
+      return true
 
-export const getRubroByCategoriaId = (categoriaId: number): string => {
-  return idCategoriaMap[categoriaId] || 'Sin categoría'
+    case 'HAMBURGUESAS':
+      return padre === 'MANUFACTURADO' && denominacion === 'HAMBURGUESAS'
+
+    case 'SIDES':
+      return padre === 'MANUFACTURADO' && denominacion === 'SIDES'
+
+    case 'BEBIDAS':
+      return padre === 'BEBIDAS'
+
+    case 'PROMOS':
+      return padre === 'COMBOS'
+    //En caso de que se quiera poner el Filtro por Otros
+    case 'OTROS':
+      return (
+        padre !== 'MANUFACTURADO' && padre !== 'BEBIDAS' && padre !== 'COMBOS'
+      )
+    default:
+      return true
+  }
 }

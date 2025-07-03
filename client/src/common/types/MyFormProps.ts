@@ -38,4 +38,6 @@ export interface MyFormProps<TValues extends Record<string, unknown>> {
     | ((formikHelpers: FormikHelpers<TValues>, values: TValues) => void)
   className?: string
   validationSchema?: ObjectSchema<TValues>
+  designInOneColumn?: boolean //Opcional, si es true cambia el diseño de 2 columnas a 1 sola
+  textColor?: string
 }

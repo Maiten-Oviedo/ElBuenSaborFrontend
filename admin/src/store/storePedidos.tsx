@@ -8,6 +8,8 @@ import httpClient from '@/common/lib/httpClient'
 interface PedidoStore {
   pedidos: IPedido[]
   setPedidos: (nuevos: IPedido[]) => void
+  fetchPedidos: () => Promise<void>
+
   actualizarPedido: (
     pedidoActualizado: Partial<IPedido> & { id: number }
   ) => void
@@ -135,19 +137,51 @@ export const usePedidoStore = create<PedidoStore>((set, get) => {
       }
     },
 
-    eliminarPedido: pedidoAEliminar => {
+    eliminarPedido: async pedidoAEliminar => {
       const actuales = get().pedidos
       const nuevos = actuales.filter(p => p.id !== pedidoAEliminar.id)
+
+      // Actualizamos el estado local
       if (nuevos.length !== actuales.length) {
         set({ pedidos: nuevos })
       }
 
       console.log('pedido a eliminar', pedidoAEliminar.id)
-      // Llamar a actualizarEstado con estadoEnum: "CANCELADO"
-      get().actualizarPedido({
-        id: pedidoAEliminar.id,
-        estadoEnum: 'CANCELADO',
-      })
+
+      // Instancia del httpClient
+      const http = httpClient()
+
+      try {
+        // Llamada PUT a /cancelar/{id} sin enviar body
+        const data = await http.put(
+          `http://localhost:8080/pedido/cancelar/${pedidoAEliminar.id}`,
+          {}
+        )
+
+        console.log('Pedido cancelado correctamente:', data)
+
+        // Actualizamos el estado local confirmando el cambio
+        get().actualizarPedido({
+          id: pedidoAEliminar.id,
+          estadoEnum: 'CANCELADO',
+        })
+      } catch (error) {
+        console.error('Error al cancelar el pedido:', error)
+        // Revertimos el estado local si ocurre algún error
+        set({ pedidos: actuales })
+      }
+    },
+
+    //Función que trae los pedidos del backend, necesaria para apartado de "Historial de órdenes"
+    fetchPedidos: async () => {
+      try {
+        const res = await httpClient().get(
+          'http://localhost:8080/pedido/getAll'
+        )
+        set({ pedidos: res as IPedido[] })
+      } catch (error) {
+        console.error('Error al obtener pedidos:', error)
+      }
     },
   }
 })

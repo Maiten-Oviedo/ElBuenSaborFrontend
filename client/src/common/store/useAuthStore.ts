@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { ICliente } from '@/common/types/entitites/ICliente'
+
 import httpClient from '@/common/lib/httpClient'
+import { ICliente } from '../types/entitites/ICliente'
 
 type LoginPayload = {
   email: string
@@ -11,7 +12,8 @@ interface AuthState {
   token: string | null
   cliente: ICliente | null
   setCliente: (cliente: ICliente) => void
-  loginWithGoogle: (token: string) => Promise<void>
+  setToken: (token: string) => void
+  loginWithGoogle: () => Promise<void>
   login: (credentials: LoginPayload) => Promise<void>
   register: (userData: {
     password: string
@@ -20,37 +22,64 @@ interface AuthState {
     email: string
     telefono: string
   }) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   loadToken: () => void
-  setToken: (token: string) => void
+}
+
+const getTokenFromStorage = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token')
+  }
+  return null
+}
+
+const getClienteFromStorage = (): ICliente | null => {
+  if (typeof window !== 'undefined') {
+    const raw = localStorage.getItem('cliente')
+    try {
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+  return null
 }
 
 export const useAuthStore = create<AuthState>(set => ({
-  cliente: null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+  token: getTokenFromStorage(),
+  cliente: getClienteFromStorage(),
+
+  setToken: token => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token)
+    }
+    set({ token })
+  },
 
   setCliente: cliente => {
-    localStorage.setItem('cliente', JSON.stringify(cliente))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cliente', JSON.stringify(cliente))
+    }
     set({ cliente })
   },
 
-  loginWithGoogle: async (externalToken: string) => {
+  loginWithGoogle: async () => {
     try {
       const data = await httpClient().post(
         'http://localhost:8080/auth/validate-google-token',
         {
-          headers: {
-            Authorization: `Bearer ${externalToken}`,
-          },
+          credentials: 'include',
         }
       )
 
-      if (!data?.token || !data?.cliente)
-        throw new Error(data.message || 'Error en autenticación')
+      if (!data?.user) throw new Error(data.message || 'Error en autenticación')
 
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('cliente', JSON.stringify(data.cliente))
-      set({ token: data.token, cliente: data.cliente })
+      const user = data.user
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cliente', JSON.stringify(user))
+      }
+
+      set({ cliente: user })
     } catch (error) {
       console.error('Google auth error:', error)
       throw error
@@ -60,18 +89,32 @@ export const useAuthStore = create<AuthState>(set => ({
   login: async ({ email, password }) => {
     try {
       const data = await httpClient().post('http://localhost:8080/auth/login', {
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, tipoLogin: 'CLIENTE' }),
+        credentials: 'include',
       })
 
-      if (!data?.token || !data?.cliente)
-        throw new Error(data.message || 'Error al iniciar sesión')
+      if (!data?.user) {
+        const backendMsg = data?.message ?? 'Credenciales incorrectas'
+        throw new Error(backendMsg)
+      }
 
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('cliente', JSON.stringify(data.cliente))
-      set({ token: data.token, cliente: data.cliente })
+      const user = data.user
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cliente', JSON.stringify(user))
+      }
+
+      set({ cliente: user })
     } catch (err) {
-      console.error('Login error', err)
-      throw err
+      let message = 'Ocurrió un error al iniciar sesión'
+
+      if (err instanceof Error) {
+        message = err.message
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        message = String((err as any).message)
+      }
+
+      throw new Error(message)
     }
   },
 
@@ -84,10 +127,16 @@ export const useAuthStore = create<AuthState>(set => ({
         }
       )
 
-      if (data.token && data.cliente) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('cliente', JSON.stringify(data.cliente))
-        set({ token: data.token, cliente: data.cliente })
+      if (data?.user && data?.token) {
+        const user = data.user
+        const token = data.token
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('cliente', JSON.stringify(user))
+          localStorage.setItem('token', token)
+        }
+
+        set({ cliente: user, token })
       } else {
         throw new Error(data.message || 'Error al registrar')
       }
@@ -97,23 +146,33 @@ export const useAuthStore = create<AuthState>(set => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('cliente')
-    localStorage.removeItem('cart')
-    set({ token: null, cliente: null })
+  logout: async () => {
+    try {
+      await httpClient().post('http://localhost:8080/auth/logout', {
+        credentials: 'include',
+      })
+    } catch (err: unknown) {
+      console.info(
+        `Ocurrio un error al hacer logout: ${(err as Error).message}`
+      )
+      console.warn('Logout request falló pero se continuará con limpieza local')
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cliente')
+      localStorage.removeItem('token')
+      localStorage.removeItem('cart') // si usás carrito
+    }
+
+    set({ cliente: null, token: null })
   },
 
   loadToken: () => {
-    const token = localStorage.getItem('token')
-    const cliente = localStorage.getItem('cliente')
-    if (token && cliente) {
-      set({ token, cliente: JSON.parse(cliente) })
-    }
-  },
+    const token = getTokenFromStorage()
+    const cliente = getClienteFromStorage()
 
-  setToken: token => {
-    localStorage.setItem('token', token)
-    set({ token })
+    if (token && cliente) {
+      set({ token, cliente })
+    }
   },
 }))

@@ -26,7 +26,7 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    'shadow-lg px-8 py-1.5 text-[20px] font-bold  rounded-[54px] my-4 hover:cursor-pointer transition-all duration-350 transition m-auto'
+    'shadow-lg px-6 py-1.5 text-[20px] font-bold  rounded-[54px] my-4 hover:cursor-pointer transition-all duration-350 transition m-auto'
 
   let variantClasses = ''
   if (variant === 'primary') {

@@ -35,7 +35,11 @@ export default function CategoriaSelectorFormik({ name }: Props) {
         const data = res as ICategoria
         const subs = data.subcategorias ?? []
 
-        setCategorias(subs)
+        const subsOrdenadas = subs.sort((a, b) =>
+          a.denominacion.localeCompare(b.denominacion)
+        )
+
+        setCategorias(subsOrdenadas)
         setCategoriaActual({
           id: data.id,
           denominacion: data.denominacion,

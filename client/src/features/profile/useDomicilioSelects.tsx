@@ -14,6 +14,7 @@ export const useDomicilioSelects = () => {
     ""
   );
 
+  //Traer todos los países para el select
   useEffect(() => {
     const fetchPaises = async () => {
       const response = await httpClient().get("http://localhost:8080/paises");
@@ -22,6 +23,7 @@ export const useDomicilioSelects = () => {
     fetchPaises();
   }, []);
 
+  //Traer todas las provincias para el select, dependiendo del país seleccionado
   useEffect(() => {
     if (!selectedPaisId) return;
 
@@ -30,12 +32,14 @@ export const useDomicilioSelects = () => {
         `http://localhost:8080/provincias/${selectedPaisId}`
       );
       setProvincias(response);
+      //Al elegir una provincia, se reinician las localidades y la localidad previamente seleccionada
       setLocalidades([]);
       setSelectedProvinciaId("");
     };
     fetchProvincias();
   }, [selectedPaisId]);
 
+  //Traer todas las localidades para el select, dependiendo de la provincia seleccionada
   useEffect(() => {
     if (!selectedProvinciaId) return;
 
@@ -47,11 +51,6 @@ export const useDomicilioSelects = () => {
     };
     fetchLocalidades();
   }, [selectedProvinciaId]);
-
-  useEffect(() => {
-    console.log(`País seleccionado: ${selectedPaisId}`);
-    console.log(`Provincia seleccionada: ${selectedProvinciaId}`);
-  }, [selectedPaisId, selectedProvinciaId]);
 
   const setInitialSelections = async ({
     paisId,

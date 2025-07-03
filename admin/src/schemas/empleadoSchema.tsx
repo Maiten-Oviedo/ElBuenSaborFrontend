@@ -28,5 +28,16 @@ export const crearEmpleadoSchema = Yup.object().shape({
     .required('Debe repetir la contraseña')
     .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden'),
 
-  rol: Yup.string().required('El rol es obligatorio'),
-});
+  rolId: Yup.string()
+    .typeError('Debe seleccionar un rol')
+    .required('El rol es obligatorio'),
+})
+
+export const editarEmpleadoSchema = Yup.object({
+  nombre: Yup.string().required(),
+  apellido: Yup.string().required(),
+  telefono: Yup.string().required(),
+  email: Yup.string().email().required(),
+  rolId: Yup.number().required(),
+  activo: Yup.boolean().required(),
+})

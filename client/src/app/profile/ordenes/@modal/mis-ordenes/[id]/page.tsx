@@ -9,7 +9,7 @@ import Button from '@/common/components/ui/Button'
 import { FaFileDownload } from 'react-icons/fa'
 import { useParams } from 'next/navigation'
 
-const Page = () => {
+const VerOrden = () => {
   const { id } = useParams()
   const [pedido, setPedido] = useState<IPedido | null>(null)
   const [direccion, setDireccion] = useState('Cargando...')
@@ -25,7 +25,7 @@ const Page = () => {
 
         // 2. Obtener los domicilios del cliente
         const domicilios = (await httpClient().get(
-          `http://localhost:8080/cliente/${pedidoResponse.clienteId}/domicilios`
+          `http://localhost:8080/cliente/${pedidoResponse.clienteId}/domicilios/getAll`
         )) as IDomicilio[]
 
         const domicilio = domicilios.find(
@@ -55,7 +55,10 @@ const Page = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/facturas/pedido/${pedido.id}`
+        `http://localhost:8080/facturas/pedido/${pedido.id}`,
+        {
+          credentials: 'include',
+        }
       )
 
       const blob = await response.blob()
@@ -156,4 +159,4 @@ const Page = () => {
   )
 }
 
-export default Page
+export default VerOrden

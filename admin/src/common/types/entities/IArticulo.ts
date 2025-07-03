@@ -6,7 +6,8 @@ export interface IArticulo {
   precioVenta: number
   productoActivo: boolean
   tiempoEstimadoMinutos: number
+  margen: number | null
   //relaciones
-  imagenesUrls?: IImagenArticulo[] | []
+  imagenesUrls?: IImagenArticulo[] | string[]
   categoriaId: number
 }

@@ -87,10 +87,7 @@ export default function EditarRubro() {
     loadCategoria()
   }, [id, getCategoriaById, isInitialLoad])
 
-  const handleCategorySelect = (
-    categoryId: number | null,
-    categoryName: string | null
-  ) => {
+  const handleCategorySelect = (categoryId: number | null) => {
     // Limpiar errores previos
     setCategoryError('')
 
@@ -112,10 +109,7 @@ export default function EditarRubro() {
     setSelectedCategoryId(categoryId)
   }
 
-  const handleSubmit = async (
-    values: EditarRubroValues,
-    formikHelpers: FormikHelpers<EditarRubroValues>
-  ) => {
+  const handleSubmit = async (values: EditarRubroValues) => {
     setError(null)
     setLoading(true)
 
@@ -189,6 +183,7 @@ export default function EditarRubro() {
           loading={loading}
           error={error}
           onLeftButtonClick={() => router.back()}
+          designInOneColumn
         />
 
         {/* Información adicional */}

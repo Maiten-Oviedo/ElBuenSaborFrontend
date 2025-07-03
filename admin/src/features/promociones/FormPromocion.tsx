@@ -1,18 +1,18 @@
 'use client'
 
-import { Formik } from 'formik'
+import { ProductoCombo } from '@/common/types/entities/IProductoCombo'
 import InnerForm from './InnerForm'
-import Button from '../../common/components/button/Button'
-import { FormBaseSinInsumosProps } from '@/common/types/form.types'
+import { useFormikContext } from 'formik'
 
-export type FormStepTwoPromocionValues = {
+export type FormProductos = {
   productosSeleccionados: {
-    id: number
+    articuloId: number
     nombre: string
     precioCosto: number
     precioVenta: number
     cantidad: number
     tiempoEstimadoMinutos: number
+    precioPromocional?: number
   }[]
 }
 
@@ -24,39 +24,51 @@ type ProductoOption = {
   tiempoEstimadoMinutos: number
 }
 
-type Props = FormBaseSinInsumosProps<FormStepTwoPromocionValues> & {
+type Props = {
   productosOptions: ProductoOption[]
+  onFormChange?: (form: FormProductos) => void
+  onChange?: (
+    productosSeleccionados: ProductoCombo[],
+    precioPromocional: number
+  ) => void
+  textButton?: string
+  textLeftButton?: string
+  onLeftButtonClick?: () => void
+  hideSubmitButton?: boolean
+  loading?: boolean
 }
 
 export default function FormProductosPromocion({
-  initialValues,
-  validationSchema,
-  onSubmit,
-  loading = false,
-  error,
   productosOptions,
-  textButton = 'Guardar',
+  onFormChange,
+  onChange,
+  textButton = 'Continuar',
   textLeftButton = 'Cancelar',
   onLeftButtonClick,
-  onFormChange,
+  hideSubmitButton = true,
+  loading = false,
 }: Props) {
+  const { values, setFieldValue } = useFormikContext<FormProductos>()
+
+  const calcularPrecioPromo = (productos: ProductoCombo[]) =>
+    productos.reduce(
+      (acc, p) => acc + (p.precioVenta ?? 0) * (p.cantidad ?? 1),
+      0
+    )
+
   return (
-    <Formik<FormStepTwoPromocionValues>
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={(values, helpers) => onSubmit(values, helpers)}
-    >
-      {({ values }) => (
-        <InnerForm
-          values={values}
-          productosOptions={productosOptions}
-          onFormChange={onFormChange}
-          onLeftButtonClick={onLeftButtonClick}
-          textButton={textButton}
-          textLeftButton={textLeftButton}
-          loading={loading}
-        />
-      )}
-    </Formik>
+    <InnerForm
+      values={values}
+      productosOptions={productosOptions}
+      onFormChange={onFormChange}
+      onProductoChange={nuevosProductos => {
+        setFieldValue('productosSeleccionados', nuevosProductos)
+        onChange?.(nuevosProductos, calcularPrecioPromo(nuevosProductos))
+      }}
+      onLeftButtonClick={onLeftButtonClick}
+      textButton={textButton}
+      textLeftButton={textLeftButton}
+      loading={loading}
+    />
   )
 }

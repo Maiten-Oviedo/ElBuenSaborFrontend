@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Form, Field, FieldArray, ErrorMessage } from 'formik'
+import { Form, Field, FieldArray, ErrorMessage, FormikErrors } from 'formik'
 import Button from '../../common/components/button/Button'
 import { FaTrash } from 'react-icons/fa'
-import { FormStepTwoPromocionValues } from './FormPromocion'
+import type { FormProductos } from './FormPromocion'
 
 type ProductoOption = {
   label: string
@@ -15,38 +15,45 @@ type ProductoOption = {
 }
 
 type Props = {
-  values: FormStepTwoPromocionValues
+  values: FormProductos
   productosOptions: ProductoOption[]
   error?: string
   loading?: boolean
-  onFormChange?: (values: FormStepTwoPromocionValues) => void
+  onFormChange?: (values: FormProductos) => void
+  onProductoChange?: (
+    productos: FormProductos['productosSeleccionados']
+  ) => void
   onLeftButtonClick?: () => void
   textButton?: string
   textLeftButton?: string
+  errors?: FormikErrors<FormProductos>
 }
 
 export default function InnerForm({
   values,
   productosOptions,
+  errors,
   error,
   loading = false,
   onFormChange,
+  onProductoChange,
   onLeftButtonClick,
   textButton = 'Guardar',
   textLeftButton = 'Cancelar',
 }: Props) {
   useEffect(() => {
     onFormChange?.(values)
-  }, [values])
+    onProductoChange?.(values.productosSeleccionados)
+  }, [JSON.stringify(values.productosSeleccionados)])
 
   return (
-    <Form className="w-full flex flex-col gap-6 text-white">
+    <div className="w-full flex flex-col gap-6 text-white">
       <FieldArray name="productosSeleccionados">
         {({ push, remove }) => (
           <>
-            {values.productosSeleccionados.map((detalle, index) => {
+            {values.productosSeleccionados.map((detalle, index: number) => {
               const selectedIds = values.productosSeleccionados
-                .map((d, i) => (i !== index ? String(d.id) : null))
+                .map((d, i) => (i !== index ? String(d.articuloId) : null))
                 .filter((id): id is string => !!id)
 
               return (
@@ -57,21 +64,38 @@ export default function InnerForm({
                   {/* Producto */}
                   <div className="flex flex-col">
                     <label className="font-medium">Producto</label>
-                    <Field name={`productosSeleccionados[${index}].id`}>
+                    <Field name={`productosSeleccionados[${index}].articuloId`}>
                       {({ field, form }: any) => (
                         <select
                           {...field}
                           className="mb-4 rounded-full p-2 bg-white text-black"
-                          onChange={(e) => {
+                          onChange={e => {
                             const selectedValue = Number(e.target.value)
-                            const selectedProducto = productosOptions.find(p => p.value === selectedValue)
+                            const selectedProducto = productosOptions.find(
+                              p => p.value === selectedValue
+                            )
 
                             if (selectedProducto) {
-                              form.setFieldValue(`productosSeleccionados[${index}].id`, selectedValue)
-                              form.setFieldValue(`productosSeleccionados[${index}].nombre`, selectedProducto.label)
-                              form.setFieldValue(`productosSeleccionados[${index}].precioCosto`, selectedProducto.precioCosto)
-                              form.setFieldValue(`productosSeleccionados[${index}].precioVenta`, selectedProducto.precioVenta)
-                              form.setFieldValue(`productosSeleccionados[${index}].tiempoEstimadoMinutos`, selectedProducto.tiempoEstimadoMinutos)
+                              form.setFieldValue(
+                                `productosSeleccionados[${index}].articuloId`,
+                                selectedValue
+                              )
+                              form.setFieldValue(
+                                `productosSeleccionados[${index}].nombre`,
+                                selectedProducto.label
+                              )
+                              form.setFieldValue(
+                                `productosSeleccionados[${index}].precioCosto`,
+                                selectedProducto.precioCosto
+                              )
+                              form.setFieldValue(
+                                `productosSeleccionados[${index}].precioVenta`,
+                                selectedProducto.precioVenta
+                              )
+                              form.setFieldValue(
+                                `productosSeleccionados[${index}].tiempoEstimadoMinutos`,
+                                selectedProducto.tiempoEstimadoMinutos
+                              )
                             }
                           }}
                         >
@@ -102,7 +126,8 @@ export default function InnerForm({
                       type="number"
                       name={`productosSeleccionados[${index}].cantidad`}
                       className="mb-4 rounded-full p-2 bg-white text-black"
-                      min={1}
+                      min={0.01}
+                      step="any"
                     />
                     <ErrorMessage
                       name={`productosSeleccionados[${index}].cantidad`}
@@ -122,13 +147,19 @@ export default function InnerForm({
               )
             })}
 
+            {typeof errors?.productosSeleccionados === 'string' && (
+              <div className="text-red-400 text-sm text-center mt-2">
+                {errors.productosSeleccionados}
+              </div>
+            )}
+
             <div className="flex justify-center items-center">
               <Button
                 type="button"
                 className="w-fit mt-4 bg-orange text-white"
                 onClick={() => {
                   push({
-                    id: 0,
+                    articuloId: 0,
                     nombre: '',
                     precioCosto: 0,
                     precioVenta: 0,
@@ -149,19 +180,6 @@ export default function InnerForm({
           <p className="text-red-400 w-full break-words">{error}</p>
         </div>
       )}
-
-      <div className="flex justify-between mt-8">
-        <Button
-          type="button"
-          onClick={onLeftButtonClick}
-          variant="secondary"
-        >
-          {textLeftButton}
-        </Button>
-        <Button type="submit" className="bg-red text-white">
-          {loading ? 'Cargando...' : textButton}
-        </Button>
-      </div>
-    </Form>
+    </div>
   )
 }

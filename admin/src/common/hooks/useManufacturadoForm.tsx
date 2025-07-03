@@ -1,17 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import type { FormikErrors, FormikHelpers } from 'formik'
+import type { FormikHelpers } from 'formik'
 import type { FormThreeValues } from '@/features/modalManufacturado/FormRecetaManufacturado'
+import {
+  IStepFourValues,
+  IStepOneValues,
+  IStepTwoValues,
+} from '../types/form.types'
+import * as Yup from 'yup'
+import { crearManufacturadoSchemaStepTwo } from '@/schemas/crearManufacturadoSchema'
+import { IImagenArticulo } from '../types/entities/IImagenArticulo'
 
 export const useManufacturadoForm = (initialValues: {
-  stepOne: any
-  stepTwo: any
+  stepOne: IStepOneValues
+  stepTwo: IStepTwoValues
   stepThree: FormThreeValues
-  stepFour: any
+  stepFour: IStepFourValues
 }) => {
   const [formOneValues, setFormOneValues] = useState(initialValues.stepOne)
-  const [formTwoValues, setFormTwoValues] = useState(initialValues.stepTwo)
+  const [formTwoValues, setFormTwoValues] = useState<IStepTwoValues>(
+    initialValues.stepTwo
+  )
   const [formThreeValues, setFormThreeValues] = useState<FormThreeValues>(
     initialValues.stepThree
   )
@@ -66,38 +76,52 @@ export const useManufacturadoForm = (initialValues: {
     setCurrentStep(3)
   }
 
-  const validateStepTwo = async (
-    values: any,
-    formikHelpers: FormikHelpers<any>,
-    handleSubmitStepTwo: Function
-  ) => {
-    const sanitizedValues = {
-      denominacion: values.denominacion || '',
-      descripcion: values.descripcion || '',
-      productoActivo: values.productoActivo || '',
-      imagenesUrls: [],
-    }
-
-    // Si vienen URLs separadas por coma, las dividimos
-    const inputUrls = values.imagenesUrlsInput
-      ?.split(',')
-      .map((url: string) => url.trim())
-      .filter((url: string) => url !== '')
-
-    if (Array.isArray(values.imagenesUrls)) {
-      sanitizedValues.imagenesUrls = inputUrls.map(url => {
-        // Buscamos si ya existía con ID
-        const existente = values.imagenesUrls.find(
-          (img: any) => img.url === url
-        )
-        return existente ? existente : { id: null, url }
-      })
-    } else {
-      // fallback si no hay imagenes anteriores
-      sanitizedValues.imagenesUrls = inputUrls.map(url => ({ id: null, url }))
-    }
-    handleSubmitStepTwo(sanitizedValues)
+  function isIImagenArticuloArray(arr: any[]): arr is IImagenArticulo[] {
+    return arr.length > 0 && typeof arr[0] === 'object' && 'url' in arr[0]
   }
+
+  const validateStepTwo = async (
+    values: Omit<IStepTwoValues, 'imagenesUrls'> & {
+      imagenesUrls: (string | IImagenArticulo)[]
+    },
+    helpers: FormikHelpers<IStepTwoValues>,
+    handleSubmitStepTwo: (values: IStepTwoValues) => void
+  ) => {
+    try {
+      await crearManufacturadoSchemaStepTwo.validate(values, {
+        abortEarly: false,
+      })
+
+      let imagenesUrlsFormatted: string[] | IImagenArticulo[] = []
+
+      if (Array.isArray(values.imagenesUrls)) {
+        if (isIImagenArticuloArray(values.imagenesUrls)) {
+          imagenesUrlsFormatted = values.imagenesUrls
+        } else {
+          imagenesUrlsFormatted = values.imagenesUrls.map(url =>
+            (url as string).trim()
+          )
+        }
+      }
+
+      handleSubmitStepTwo({
+        denominacion: values.denominacion,
+        descripcion: values.descripcion,
+        productoActivo: values.productoActivo,
+        imagenesUrls: imagenesUrlsFormatted,
+        esVendible: values.esVendible ?? false,
+      })
+    } catch (error: unknown) {
+      if (error instanceof Yup.ValidationError) {
+        const errors: Partial<Record<keyof IStepTwoValues, string>> = {}
+        error.inner.forEach(err => {
+          if (err.path) errors[err.path as keyof IStepTwoValues] = err.message
+        })
+        helpers.setErrors(errors)
+      }
+    }
+  }
+
   return {
     // States
     formOneValues,

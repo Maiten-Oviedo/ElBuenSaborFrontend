@@ -14,14 +14,31 @@ export default function CrearInsumoModal() {
   const router = useRouter()
 
   const handleSubmit = async (values: IArticuloInsumo) => {
-    // => Este any esta mal hay que cambiarlo al tipo Insumo cuando este
     setError(null)
     setLoading(true)
 
+    const parsedPrecioVenta =
+      (values.precioVenta as unknown as string) === '' ||
+      values.precioVenta == null
+        ? 0
+        : Number(values.precioVenta)
+
+    const parsedMargen =
+      (values.margen as unknown as string) === '' || values.margen == null
+        ? null
+        : Number(values.margen)
+
+    const transformedValues = {
+      ...values,
+      margen: parsedMargen,
+      precioVenta: parsedPrecioVenta,
+    }
+
     try {
-      await postInsumo(values)
+      await postInsumo(transformedValues)
+
       router.back()
-    } catch (error) {
+    } catch (error: unknown) {
       setError(
         `Error al editar el item. ${JSON.stringify(
           (error as Error).message

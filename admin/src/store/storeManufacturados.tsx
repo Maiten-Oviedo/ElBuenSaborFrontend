@@ -49,7 +49,7 @@ export const useStoreManufacturados = create<ManufacturadosStore>(
           }
         )
         set(state => ({
-          data: [...state.data, response], // asegurate que el back te devuelva el objeto completo con id
+          data: [...state.data, response],
           shouldRefresh: true,
         }))
       } catch (err) {
@@ -59,27 +59,23 @@ export const useStoreManufacturados = create<ManufacturadosStore>(
         throw err
       }
     },
+
     update: async item => {
-      const previous = get().data.find(m => m.id === item.id)
-
-      set(state => ({
-        data: state.data.map(m => (m.id === item.id ? { ...m, ...item } : m)),
-        shouldRefresh: true,
-      }))
-
       try {
-        await httpClient().put(
+        const response = await httpClient().put(
           `http://localhost:8080/articulo-manufacturado/${item.id}`,
           {
             body: JSON.stringify(item),
           }
         )
-      } catch (err) {
-        if (previous) {
-          set(state => ({
-            data: state.data.map(m => (m.id === previous.id ? previous : m)),
-          }))
+        if (response.message === 'No Content') {
+          throw new Error('El nombre del producto ya existe.')
         }
+        set(state => ({
+          data: state.data.map(m => (m.id === item.id ? { ...m, ...item } : m)),
+          shouldRefresh: true,
+        }))
+      } catch (err: unknown) {
         set({
           error: err instanceof Error ? err.message : 'Error desconocido',
         })
@@ -89,22 +85,32 @@ export const useStoreManufacturados = create<ManufacturadosStore>(
 
     remove: async id => {
       const previous = get().data.find(m => m.id === id)
+      if (!previous) return
 
+      const updatedItem = {
+        ...previous,
+        productoActivo: false,
+        esVendible: false,
+      }
+
+      // Optimistic update local
       set(state => ({
-        data: state.data.filter(m => m.id !== id),
-        lastUpdated: Date.now(),
+        data: state.data.map(m => (m.id === id ? updatedItem : m)),
+        shouldRefresh: true,
       }))
 
       try {
-        await httpClient().del(
-          `http://localhost:8080/articulo-manufacturado/${id}`
+        await httpClient().put(
+          `http://localhost:8080/articulo-manufacturado/${id}`,
+          {
+            body: JSON.stringify(updatedItem),
+          }
         )
       } catch (err) {
-        if (previous) {
-          set(state => ({
-            data: [...state.data, previous],
-          }))
-        }
+        // Rollback
+        set(state => ({
+          data: state.data.map(m => (m.id === id ? previous : m)),
+        }))
         set({
           error: err instanceof Error ? err.message : 'Error desconocido',
         })

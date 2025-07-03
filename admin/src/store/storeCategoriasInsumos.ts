@@ -1,5 +1,10 @@
+import httpClient from '@/common/lib/httpClient'
 import { ICategoria } from '@/common/types/entities/ICategoria'
+import { organizeCategoriesByType } from '@/common/utils/orderCatgories'
 import { create } from 'zustand'
+// import { organizeCategoriesByType } from '@/common/utils/orderCatgories' // opcional, si querés clasificar
+
+const LS_KEY = 'categorias-insumos'
 
 interface CategoriasStore {
   data: ICategoria[]
@@ -7,44 +12,113 @@ interface CategoriasStore {
   setCategoriesInsumos: (dataArray: ICategoria[]) => void
   setSubcategorias: (subcategoriasArray: ICategoria[][]) => void
   updateSubcategoriasByNivel: (nivel: number, data: ICategoria[]) => void
-
+  getCategoriaById: (id: number) => ICategoria | null
   createCategoria: (categoria: ICategoria) => void
   updateCategoria: (categoria: ICategoria) => void
   deleteCategoria: (id: number) => void
+  fetchAndSetCategorias: () => Promise<{ success: boolean; error?: string }>
+  shouldRefresh: boolean
+  setShouldRefresh: (value: boolean) => void
 }
 
-export const useStoreCategoriasInsumos = create<CategoriasStore>()(set => ({
-  data: [],
-  subcategorias: [],
+const loadFromLocalStorage = (): ICategoria[] => {
+  try {
+    const data = localStorage.getItem(LS_KEY)
+    if (!data) return []
+    return JSON.parse(data)
+  } catch {
+    return []
+  }
+}
 
-  setCategoriesInsumos: dataArray => set(() => ({ data: dataArray })),
+const saveToLocalStorage = (data: ICategoria[]) => {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(data))
+  } catch (e) {
+    console.error('Error guardando categorías en localStorage', e)
+  }
+}
 
-  setSubcategorias: subcategoriasArray =>
-    set(() => ({ subcategorias: subcategoriasArray })),
+export const useStoreCategoriasInsumos = create<CategoriasStore>()(
+  (set, get) => ({
+    data: loadFromLocalStorage(),
+    subcategorias: [],
 
-  updateSubcategoriasByNivel: (nivel, newData) =>
-    set(state => {
-      const newSubcategorias = [...state.subcategorias]
-      newSubcategorias[nivel] = newData
-      return { subcategorias: newSubcategorias.slice(0, nivel + 1) } // elimina los niveles siguientes de subcategorías si el select padre se cambia
-    }),
+    setCategoriesInsumos: dataArray => {
+      saveToLocalStorage(dataArray)
+      set({ data: dataArray })
+    },
 
-  createCategoria: categoria =>
-    set(state => ({ data: [...state.data, categoria] })),
+    getCategoriaById: id => {
+      const categoria = get().data.find(cat => cat.id === id) || null
+      return categoria
+    },
 
-  updateCategoria: categoriaIn =>
-    set(state => {
-      const newData = state.data.map(categoria =>
-        categoria.id === categoriaIn.id
-          ? { ...categoria, ...categoriaIn }
-          : categoria
-      )
-      return { data: newData }
-    }),
+    fetchAndSetCategorias: async () => {
+      try {
+        const response = (await httpClient().get(
+          'http://localhost:8080/categoria/getAll'
+        )) as ICategoria[]
 
-  deleteCategoria: id =>
-    set(state => {
-      const newData = state.data.filter(categoria => categoria.id !== id)
-      return { data: newData }
-    }),
-}))
+        if (!response) throw new Error('No se encontraron Rubros.')
+
+        const { categoriesInsumos } = organizeCategoriesByType(response)
+        set({ data: categoriesInsumos })
+        saveToLocalStorage(categoriesInsumos)
+
+        saveToLocalStorage(response)
+        set({ data: response })
+
+        return { success: true }
+      } catch (error: unknown) {
+        return { success: false, error: (error as Error).message }
+      }
+    },
+
+    setSubcategorias: subcategoriasArray =>
+      set(() => ({ subcategorias: subcategoriasArray })),
+
+    updateSubcategoriasByNivel: (nivel, newData) =>
+      set(state => {
+        const newSubcategorias = [...state.subcategorias]
+        newSubcategorias[nivel] = newData
+        return { subcategorias: newSubcategorias.slice(0, nivel + 1) }
+      }),
+
+    createCategoria: categoria =>
+      set(state => {
+        const newData = [...state.data, categoria]
+        saveToLocalStorage(newData)
+        return { data: newData }
+      }),
+
+    updateCategoria: categoriaIn =>
+      set(state => {
+        const newData = state.data.map(categoria =>
+          categoria.id === categoriaIn.id
+            ? { ...categoria, ...categoriaIn }
+            : categoria
+        )
+        saveToLocalStorage(newData)
+        return { data: newData }
+      }),
+
+    deleteCategoria: async id => {
+      await httpClient()
+        .del(`http://localhost:8080/categoria/delete/${id}`)
+        .then(() => {
+          set(state => {
+            const newData = state.data.filter(categoria => categoria.id !== id)
+            saveToLocalStorage(newData)
+            return { data: newData }
+          })
+        })
+        .catch(error => {
+          throw new Error(`Error al eliminar la categoría: ${error.message}`)
+        })
+    },
+
+    shouldRefresh: false,
+    setShouldRefresh: value => set(() => ({ shouldRefresh: value })),
+  })
+)

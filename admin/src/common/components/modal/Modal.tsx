@@ -10,12 +10,9 @@ export default function Modal({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <article
-      className="w-full fixed inset-0 bg-black/10 backdrop-blur-xs flex items-center justify-center z-50 "
-      onClick={handleCloseModal}
-    >
+    <article className="w-full fixed inset-0 bg-black/10 backdrop-blur-xs flex items-center justify-center z-50 ">
       <div
-        className="relative bg-black p-4 rounded-2xl shadow-lg w-[90%] max-w-2xl max-h-[95vh] overflow-y-auto px-10 scrollbar-red-no-background"
+        className="relative bg-black p-4 rounded-2xl shadow-lg min-w-2xl w-fit max-w-[90%] max-h-[95vh] overflow-y-auto px-10 scrollbar-red-no-background"
         onClick={e => e.stopPropagation()}
       >
         {children}

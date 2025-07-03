@@ -32,18 +32,12 @@ export default function CrearRubro() {
   )
   const [categoryError, setCategoryError] = useState<string>('')
 
-  const handleCategorySelect = (
-    categoryId: number | null,
-    categoryName: string | null
-  ) => {
+  const handleCategorySelect = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId)
     setCategoryError('')
   }
 
-  const handleSubmit = async (
-    values: CrearRubroValues,
-    formikHelpers: FormikHelpers<CrearRubroValues>
-  ) => {
+  const handleSubmit = async (values: CrearRubroValues) => {
     setError(null)
     setLoading(true)
 
@@ -108,6 +102,7 @@ export default function CrearRubro() {
           loading={loading}
           error={error}
           onLeftButtonClick={() => router.back()}
+          designInOneColumn
         />
 
         {/* Información adicional */}

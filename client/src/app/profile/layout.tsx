@@ -1,42 +1,42 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-import { useAuthStore } from '@/common/store/useAuthStore'
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useAuthStore } from "@/common/store/useAuthStore";
 
 const menuItems = [
-  { label: 'Mi cuenta', path: '/profile/cuenta' },
-  { label: 'Mis direcciones', path: '/profile/direcciones' },
-  { label: 'Seguridad', path: '/profile/seguridad' },
-  { label: 'Mis ordenes', path: '/profile/ordenes' },
-  { label: 'Cerrar sesión', path: '/' }, // O implementás logout con un handler
-]
+  { label: "Mi cuenta", path: "/profile/cuenta" },
+  { label: "Mis direcciones", path: "/profile/direcciones" },
+  { label: "Seguridad", path: "/profile/seguridad" },
+  { label: "Mis ordenes", path: "/profile/ordenes" },
+  { label: "Cerrar sesión", path: "/", logout: true },
+];
 
 export default function UserLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const cliente = useAuthStore(state => state.cliente)
-  const [checkingAuth, setCheckingAuth] = useState(true)
+  const pathname = usePathname();
+  const router = useRouter();
+  const cliente = useAuthStore((state) => state.cliente);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     if (!cliente) {
-      router.push('/')
+      router.push("/");
     } else {
-      setCheckingAuth(false)
+      setCheckingAuth(false);
     }
-  }, [cliente, router])
+  }, [cliente, router]);
 
   if (!cliente || checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Cargando tu cuenta...
       </div>
-    )
+    );
   }
 
   return (
@@ -44,25 +44,32 @@ export default function UserLayout({
       className="flex min-h-screen"
       style={{
         backgroundImage: 'url("/images/carrito-perfil/fondo-naranja.webp")',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'bottom',
-        backgroundSize: 'cover',
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "bottom",
+        backgroundSize: "cover",
       }}
     >
       <main className="flex-1 p-14 mt-[100px]">{children}</main>
       <aside className="w-64 p-6 pt-[19%] bg-black/80 text-white space-y-4">
-        {menuItems.map(({ label, path }) => (
-          <Link
+        {menuItems.map(({ label, path, logout }) => (
+          <button
             key={path}
-            href={path}
-            className={`block px-3 py-2 rounded-md hover:bg-white/50 hover:text-black transition ${
-              pathname === path ? 'bg-white text-black font-semibold' : ''
+            onClick={() => {
+              if (logout) {
+                useAuthStore.getState().logout();
+                router.push("/");
+              } else {
+                router.push(path);
+              }
+            }}
+            className={`block w-full text-left px-3 py-2 rounded-md hover:bg-white/50 hover:text-black transition cursor-pointer ${
+              pathname === path ? "bg-white text-black font-semibold" : ""
             }`}
           >
             {label}
-          </Link>
+          </button>
         ))}
       </aside>
     </div>
-  )
+  );
 }

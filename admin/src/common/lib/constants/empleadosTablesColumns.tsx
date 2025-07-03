@@ -1,29 +1,30 @@
+import { IEmpleado } from '@/common/types/entities/IEmpleado'
+
 // =========== COLUMNAS DE MOVIMIENTOS =========== //
 export const rolesTableColumns = [
-    { label: 'id', key: 'id' },
-    { label: 'denominacion', key: 'denominacion' },
-    { label: 'cant empleados', key: 'cantEmpleados' },
-    {
-        label: "Permisos",
-        key: "permisos",
-        Cell: ({ row }: { row: any }) => {
-            const permisos: string[] = row.permisos;
-
-            const texto = permisos
-                .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                .join(" - ");
-
-            return texto;
-        },
-    }
+  { label: 'id', key: 'id' },
+  { label: 'Nombre', key: 'rolName' },
 ]
 
 export const empleadosTableColumns = [
-    { label: 'id', key: 'id' },
-    { label: 'nombre', key: 'nombre' },
-    { label: 'apellido', key: 'apellido' },
-    { label: 'telefono', key: 'telefono' },
-    { label: 'email', key: 'email' },
-    { label: 'rol', key: 'rol' },
-    { label: 'acciones', key: 'acciones' },
+  { label: 'id', key: 'id' },
+  { label: 'nombre', key: 'nombre' },
+  { label: 'apellido', key: 'apellido' },
+  { label: 'telefono', key: 'telefono' },
+  { label: 'email', key: 'email' },
+  {
+    label: 'rol',
+    key: 'rol',
+    render: (empleado: IEmpleado) => empleado.rol.rolName || 'Sin rol',
+  },
+  {
+    key: 'activo',
+    label: 'Estado',
+    type: 'select',
+    options: [
+      { label: 'Activo', value: 'true' },
+      { label: 'Inactivo', value: 'false' },
+    ],
+  },
+  { label: 'acciones', key: 'acciones' },
 ]

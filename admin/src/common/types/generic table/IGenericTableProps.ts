@@ -5,6 +5,7 @@ export interface IGenericTableProps<T> {
   isLoading: boolean
   error: string | null
   section?: string
+  esEstadistica?: boolean
 }
 
 export interface ITableColumn<T> {

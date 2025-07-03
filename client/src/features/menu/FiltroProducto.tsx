@@ -15,6 +15,7 @@ const FiltroProducto = ({ onFiltroChange }: Props) => {
     'SIDES',
     'BEBIDAS',
     'PROMOS',
+    'OTROS', //En caso de filtro por otros
   ]
 
   const handleClick = (rubro: FiltroMenu) => {
@@ -23,7 +24,7 @@ const FiltroProducto = ({ onFiltroChange }: Props) => {
   }
 
   return (
-    <div className="flex text-white h-[150px] w-[60%] justify-around gap-6 montserrat font-bold text-2xl ">
+    <div className="flex text-white h-[150px] w-[80%] justify-around gap-6 montserrat font-bold text-2xl ">
       {filtros.map(filtro => (
         <React.Fragment key={filtro}>
           <button

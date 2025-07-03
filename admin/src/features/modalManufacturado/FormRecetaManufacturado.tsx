@@ -1,6 +1,13 @@
 'use client'
 
-import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik'
+import {
+  Formik,
+  Form,
+  Field,
+  FieldArray,
+  ErrorMessage,
+  FieldProps,
+} from 'formik'
 import Button from '../../common/components/button/Button'
 import { FormRecetaManufacturadoProps } from '@/common/types/form.types'
 import { IArticuloManufacturadoDetalle } from '@/common/types/entities/IManufacturadoDetalle'
@@ -30,6 +37,8 @@ export default function FormRecetaManufacturado({
       onSubmit={onSubmit}
     >
       {({ values }) => {
+        console.log('Valores actuales', values)
+        console.log('Insumos options', insumosOptions)
         // Mover el useEffect FUERA del render directamente:
         useEffect(() => {
           if (onFormChange) {
@@ -59,7 +68,7 @@ export default function FormRecetaManufacturado({
                     return (
                       <div
                         key={index}
-                        className="grid grid-cols-[1.5fr_1.5fr_auto] px-6 py-1 gap-4 items-center justify-center border-1 border-white rounded-2xl"
+                        className="grid grid-cols-[1.5fr_1.5fr_auto]  py-1 gap-2 items-center justify-center border-1 border-white rounded-2xl"
                       >
                         {/* Ingrediente */}
                         <div className="flex flex-col">
@@ -72,25 +81,31 @@ export default function FormRecetaManufacturado({
                                 {...field}
                                 className="mb-4 rounded-full p-2 bg-white text-black"
                                 onChange={e => {
-                                  const value =
-                                    e.target.value === ''
-                                      ? ''
-                                      : Number(e.target.value)
-                                  form.setFieldValue(field.name, value)
+                                  const value = e.target.value
+                                  form.setFieldValue(
+                                    field.name,
+                                    value !== '' ? Number(value) : ''
+                                  )
                                 }}
                               >
-                                <option value="">Seleccionar</option>
-                                {insumosOptions.map(opt => (
-                                  <option
-                                    key={opt.value}
-                                    value={opt.value}
-                                    disabled={selectedIds.includes(
-                                      String(opt.value)
-                                    )}
-                                  >
-                                    {opt.label}
-                                  </option>
-                                ))}
+                                <option value="" disabled>
+                                  Seleccionar
+                                </option>
+                                {insumosOptions.map(opt => {
+                                  if (!opt.label || !opt.value) return null // proteger
+
+                                  return (
+                                    <option
+                                      key={opt.value}
+                                      value={opt.value}
+                                      disabled={selectedIds.includes(
+                                        String(opt.value)
+                                      )}
+                                    >
+                                      {String(opt.label)}
+                                    </option>
+                                  )
+                                })}
                               </select>
                             )}
                           </Field>
@@ -105,13 +120,19 @@ export default function FormRecetaManufacturado({
                         {/* Cantidad */}
                         <div className="flex flex-col">
                           <label className="font-medium">
-                            Cantidad en gramos
+                            Cantidad en{' '}
+                            {insumosOptions.find(
+                              opt =>
+                                Number(opt.value) ===
+                                Number(detalle.articuloInsumoId)
+                            )?.unidadMedida || 'gramos'}
                           </label>
                           <Field
                             type="number"
                             name={`articuloManufacturadoDetalle[${index}].cantidad`}
                             className="mb-4 rounded-full p-2 bg-white text-black"
-                            min={1}
+                            min={0.01}
+                            step="any"
                           />
                           <ErrorMessage
                             name={`articuloManufacturadoDetalle[${index}].cantidad`}
@@ -123,7 +144,7 @@ export default function FormRecetaManufacturado({
                         {/* Botón eliminar */}
                         <Button
                           type="button"
-                          className="bg-transparent hover:bg-transparent hover:scale-125 transition-all duration-100"
+                          className="bg-transparent hover:bg-transparent hover:scale-125 transition-all duration-100 px-0"
                           icon={<FaTrash />}
                           onClick={() => remove(index)}
                         />
@@ -149,18 +170,28 @@ export default function FormRecetaManufacturado({
                 </>
               )}
             </FieldArray>
+            <Field name="articuloManufacturadoDetalle">
+              {({ form }: FieldProps<FormThreeValues>) =>
+                typeof form.errors.articuloManufacturadoDetalle === 'string' ? (
+                  <div className="text-red text-center font-bold">
+                    {form.errors.articuloManufacturadoDetalle}
+                  </div>
+                ) : null
+              }
+            </Field>
 
             {/* Errores generales */}
             {error && (
               <div className="max-w-full">
-                <p className="text-red-400 w-full break-words">{error}</p>
+                <p className="text-red-400 w-full break-words">
+                  {typeof error === 'string' ? error : JSON.stringify(error)}
+                </p>
               </div>
             )}
-
             {/* Botones de acción */}
             <div className="flex justify-between mt-8">
               <Button
-                type="submit"
+                type="button"
                 onClick={onLeftButtonClick}
                 variant="secondary"
               >

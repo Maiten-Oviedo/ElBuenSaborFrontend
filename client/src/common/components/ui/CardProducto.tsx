@@ -35,18 +35,30 @@ const CardProducto = ({ producto }: Props) => {
   //Se definen los distintos tipos de colores de fondo según el tipo de producto o su estado
   let bg
   if (!producto.productoActivo) {
-    bg = 'bg-[#4D4D4D] text-white'
-  } else if (producto.productoActivo && producto.categoriaId === 3) {
-    bg = 'bg-black text-[#E34234]'
-  } else if (producto.productoActivo && producto.categoriaId === 16) {
-    bg = 'bg-[#5A0F0F] text-white'
-  } else bg = 'bg-[#331818] text-white'
+    bg = 'bg-[#4D4D4D] text-white' // Inactivo
+  } else if (
+    producto.categoriaPadre?.toUpperCase() === 'MANUFACTURADO' &&
+    producto.categoriaDenominacion?.toUpperCase() === 'HAMBURGUESAS'
+  ) {
+    bg = 'bg-black text-[#E34234]' // Hamburguesas
+  } else if (
+    producto.categoriaPadre?.toUpperCase() === 'MANUFACTURADO' &&
+    producto.categoriaDenominacion?.toUpperCase() === 'SIDES'
+  ) {
+    bg = 'bg-[#5A0F0F] text-white' // Sides
+  } else if (producto.categoriaPadre?.toUpperCase() === 'BEBIDAS') {
+    bg = 'bg-[#331818] text-white' // Bebidas
+  } else if (producto.categoriaPadre?.toUpperCase() === 'COMBOS') {
+    bg = 'bg-[#331818] text-white' // Promos
+  } else {
+    bg = 'bg-[#331818] text-white' // Default
+  }
 
   return (
     <div
       className={`${bg} w-[380px] min-h-[380px] flex flex-col items-center justify-center rounded-xl`}
     >
-      <Image
+      <img
         src={imagenUrl}
         alt={`Imagen de producto ${producto.denominacion}`}
         width={

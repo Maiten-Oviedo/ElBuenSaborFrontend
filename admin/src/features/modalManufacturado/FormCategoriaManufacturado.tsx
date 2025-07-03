@@ -10,10 +10,13 @@ type PasoCategoria = {
 
 interface Props {
   prevCategory?: { id: number | undefined; denominacion: string | undefined }
+  onCategoriaSeleccionada?: (id: number) => void
 }
 
-export default function CategoriaSelector({ prevCategory }: Props) {
-  console.log('ACTUAL: ', prevCategory)
+export default function CategoriaSelector({
+  onCategoriaSeleccionada,
+  prevCategory,
+}: Props) {
   const [categorias, setCategorias] = useState<ICategoria[]>([])
   const [categoriaActual, setCategoriaActual] = useState<ICategoria>({
     denominacion: 'Manufacturado',
@@ -29,7 +32,9 @@ export default function CategoriaSelector({ prevCategory }: Props) {
         )
         const data = response as ICategoria
 
-        const subcategorias = data.subcategorias ?? []
+        const subcategorias =
+          data.subcategorias?.filter(item => item.denominacion !== 'Combos') ??
+          []
 
         setCategorias(subcategorias)
 
@@ -44,6 +49,7 @@ export default function CategoriaSelector({ prevCategory }: Props) {
     }
     fetchSubsCat()
   }, [])
+
   const handleSeleccion = async (categoriaId: number) => {
     if (!categoriaId) return
 
@@ -51,6 +57,7 @@ export default function CategoriaSelector({ prevCategory }: Props) {
       ...prev,
       { categoriaActual, subcategorias: categorias },
     ])
+
     try {
       const response = await httpClient().get(
         `http://localhost:8080/categoria/getComplete/${categoriaId}`
@@ -60,12 +67,15 @@ export default function CategoriaSelector({ prevCategory }: Props) {
       const subcategorias = data.subcategorias ?? []
 
       setCategorias(subcategorias)
-
       setCategoriaActual({
         id: data.id,
         denominacion: data.denominacion,
         categoriaPadre: data.categoriaPadre,
       })
+
+      // 🔥 Acá actualizás el formOneValues
+      console.log('NUEVO ID: ', data.id)
+      onCategoriaSeleccionada?.(data.id!)
     } catch (error) {
       console.error('Error cargando subcategorías', error)
     }
@@ -78,25 +88,25 @@ export default function CategoriaSelector({ prevCategory }: Props) {
     setCategorias(anterior.subcategorias)
     setHistorial(prev => prev.slice(0, -1))
   }
-  console.log(prevCategory?.denominacion)
+
   return (
     <>
       <div className={`max-w-md mx-auto mt-10 space-y-4`}>
-        <h2 className="text-2xl font-semibold">Seleccionar Categoría</h2>
+        <h2 className="text-xl font-semibold text-center">Editar Categoría</h2>
 
         {categoriaActual && (
           <>
             {prevCategory &&
               prevCategory?.denominacion !== categoriaActual.denominacion && (
                 <div className="text-gray-700 flex gap-1 items-center">
-                  <span className=" text-white text-lg">Categoría Actúal:</span>
-                  <span className="font-bold text-orange text-lg">
+                  <span className=" text-white text-lg">Categoría actual:</span>
+                  <span className="font-bold text-white text-lg">
                     {prevCategory.denominacion}
                   </span>
                 </div>
               )}
             <div className="text-gray-700 flex gap-1 items-center">
-              <span className="text-white text-lg">Nueva Categoria: </span>
+              <span className="text-white text-lg">Nueva categoria: </span>
               <span className="font-bold text-orange text-lg">
                 {categoriaActual.denominacion}
               </span>

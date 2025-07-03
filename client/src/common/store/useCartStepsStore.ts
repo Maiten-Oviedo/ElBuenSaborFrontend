@@ -6,7 +6,7 @@ type TipoRetiro = 'TAKEAWAY' | 'DELIVERY'
 interface CartStepsState {
   metodoPago: MetodoPago
   retiro: TipoRetiro
-  domicilio: number
+  domicilio: number | null
   indicaciones: string | null
   setMetodoPago: (metodo: MetodoPago) => void
   setRetiro: (retiro: TipoRetiro) => void
@@ -17,7 +17,7 @@ interface CartStepsState {
 export const useCartStepsStore = create<CartStepsState>(set => ({
   metodoPago: 'EFECTIVO',
   retiro: 'TAKEAWAY',
-  domicilio: 1,
+  domicilio: null,
   indicaciones: null,
   setMetodoPago: nuevoMetodo => set({ metodoPago: nuevoMetodo }),
 
@@ -31,7 +31,7 @@ export const useCartStepsStore = create<CartStepsState>(set => ({
       set({ retiro: nuevoRetiro })
     }
   },
-  
-  setDomicilio: nuevoDomicilio => set({domicilio: nuevoDomicilio}),
-  setIndicaciones: nuevaIndicacion => set({indicaciones: nuevaIndicacion}),
+
+  setDomicilio: nuevoDomicilio => set({ domicilio: nuevoDomicilio }),
+  setIndicaciones: nuevaIndicacion => set({ indicaciones: nuevaIndicacion }),
 }))

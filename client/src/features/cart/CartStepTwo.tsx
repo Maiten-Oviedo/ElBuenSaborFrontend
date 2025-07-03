@@ -58,7 +58,7 @@ const CartStepTwo = () => {
       if (!cliente?.id) return
       try {
         const response = await httpClient().get(`
-          http://localhost:8080/cliente/${cliente.id}/domicilios`)
+          http://localhost:8080/cliente/${cliente.id}/domicilios/getAll`)
         console.log(response)
         setDomicilios(response)
       } catch (error) {

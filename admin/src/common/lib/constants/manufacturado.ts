@@ -8,9 +8,10 @@ export const initialValuesStepOne = {
 
 export const initialValuesStepTwo = {
   denominacion: '',
-  productoActivo: '',
-  imagenesUrlsInput: '',
+  productoActivo: false,
+  imagenesUrls: [],
   descripcion: '',
+  esVendible: true,
 }
 
 export const initialValuesStepThree = {
@@ -21,6 +22,7 @@ export const initialValuesStepFour = {
   precioCosto: 0,
   precioVenta: 0,
   tiempoEstimadoMinutos: 0,
+  margen: null,
 }
 
 export const getManufacturadoFieldsStepOne = (
@@ -39,36 +41,16 @@ export const getManufacturadoFieldsStepOne = (
 
 export const manufacturadoFieldsStepTwo: FormField[] = [
   { name: 'denominacion', label: 'Nombre', type: 'text' },
-  {
-    name: 'imagenesUrlsInput',
-    label: 'URLs de imágenes (separadas por coma)',
-    type: 'text',
-  },
   { name: 'descripcion', label: 'Descripción', type: 'text' },
-  {
-    name: 'productoActivo',
-    label: 'Estado',
-    type: 'select',
-    options: [
-      { label: 'Activo', value: 'true' },
-      { label: 'Inactivo', value: 'false' },
-    ],
-  },
+  { name: 'productoActivo', label: 'Estado', type: 'checkbox' },
+  { name: 'esVendible', label: '¿Es Vendible?', type: 'checkbox' },
 ]
 
-export const getManufacturadoFieldsStepFour = (
-  precioCosto: number
-): FormField[] => [
+export const getManufacturadoFieldsStepFour = (): FormField[] => [
   {
     name: 'tiempoEstimadoMinutos',
     label: 'Tiempo Mínimo Estimado (min)',
     type: 'number',
-  },
-  {
-    name: 'precioVenta',
-    label: `Precio de Venta (mínimo: $${precioCosto.toFixed(2)})`,
-    type: 'number',
-    placeholder: `Ingrese un precio mayor a $${precioCosto.toFixed(2)}`,
   },
 ]
 

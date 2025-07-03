@@ -9,11 +9,13 @@ import {
 import Image from 'next/image'
 import httpClient from '@/common/lib/httpClient'
 import { IArticuloManufacturado } from '@/common/types/entitites/IArticuloManufacturado'
+import { useRouter } from 'next/navigation'
 
 const Carousel: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [topProductos, setTopProductos] = useState<IArticuloManufacturado[]>([])
+  const router = useRouter()
 
   //Traer productos y rankearlos por cantVendidos en un top 3
   useEffect(() => {
@@ -105,7 +107,7 @@ const Carousel: React.FC = () => {
             >
               {topProductos[currentIndex]?.denominacion}
             </h2>
-            <Button>PEDIR AHORA</Button>
+            <Button onClick={() => router.push('/menu')}>PEDIR AHORA</Button>
           </div>
           <button
             className="group self-start sm:self-auto mt-4 sm:mt-0 hover:bg-transparent"

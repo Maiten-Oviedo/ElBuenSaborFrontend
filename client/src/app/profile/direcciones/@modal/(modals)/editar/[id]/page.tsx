@@ -1,34 +1,33 @@
-'use client'
+"use client";
 
-import MyForm from '@/common/components/ui/forms/MyForm'
-import ParallelModal from '@/common/components/ui/parallel-modal/ParallelModal'
-import httpClient from '@/common/lib/httpClient'
-import { crearDomicilioSchema } from '@/common/schemas/crearDomicilioSchema'
-import { useAuthStore } from '@/common/store/useAuthStore'
-import { useReloadStore } from '@/common/store/useReloadStore'
+import MyForm from "@/common/components/ui/forms/MyForm";
+import ParallelModal from "@/common/components/ui/parallel-modal/ParallelModal";
+import httpClient from "@/common/lib/httpClient";
+import { editarDomicilioSchema } from "@/common/schemas/domicilioSchema";
+import { useAuthStore } from "@/common/store/useAuthStore";
+import { useReloadStore } from "@/common/store/useReloadStore";
 
 import {
   DomicilioValues,
   getDomicilioFormFields,
-} from '@/common/types/forms/crudDomicilioForms'
-import { FormField } from '@/common/types/MyFormProps'
-import { useDomicilioSelects } from '@/features/profile/useDomicilioSelects'
-import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+} from "@/common/types/forms/crudDomicilioForms";
+import { useDomicilioSelects } from "@/features/profile/useDomicilioSelects";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const EditarDomicilioModal = () => {
-  const router = useRouter()
-  const params = useParams()
-  const idDomicilio = params?.id
-  const clienteId = useAuthStore(state => state.cliente?.id)
-  const toggleReload = useReloadStore(state => state.toggleReload)
+  const router = useRouter();
+  const params = useParams();
+  const idDomicilio = params?.id;
+  const clienteId = useAuthStore((state) => state.cliente?.id);
+  const toggleReload = useReloadStore((state) => state.toggleReload);
 
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [initialValues, setInitialValues] = useState<DomicilioValues | null>(
     null
-  )
+  );
 
   const {
     paises,
@@ -37,38 +36,41 @@ const EditarDomicilioModal = () => {
     onPaisChange,
     onProvinciaChange,
     setInitialSelections,
-  } = useDomicilioSelects()
+  } = useDomicilioSelects();
 
   useEffect(() => {
     const fetchDomicilio = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
         const domicilio = await httpClient().get(
           `http://localhost:8080/cliente/${clienteId}/domicilios/${idDomicilio}`
-        )
+        );
 
         const values: DomicilioValues = {
+          pais: domicilio.pais.id.toString(),
+          provincia: domicilio.provincia.id.toString(),
           calle: domicilio.calle,
           numero: domicilio.numero,
           codigoPostal: domicilio.codigoPostal,
           localidad: domicilio.localidad.id.toString(),
-          descripcion: domicilio.descripcion || '',
-        }
+          descripcion: domicilio.descripcion || "",
+        };
 
+        //Inicializa correctamente los selects
         setInitialSelections({
           paisId: domicilio.pais.id,
           provinciaId: domicilio.provincia.id,
-        })
+        });
 
-        setInitialValues(values)
+        setInitialValues(values);
       } catch (e: unknown) {
-        setError((e as Error).message)
+        setError((e as Error).message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    if (idDomicilio) fetchDomicilio()
-  }, [idDomicilio])
+    };
+    if (idDomicilio) fetchDomicilio();
+  }, [idDomicilio]);
 
   const handleSubmit = async (values: DomicilioValues) => {
     const transformedValues = {
@@ -77,33 +79,33 @@ const EditarDomicilioModal = () => {
       codigoPostal: values.codigoPostal,
       localidadId: Number(values.localidad),
       descripcion: values.descripcion,
-    }
+    };
 
     try {
-      setLoading(true)
+      setLoading(true);
 
       await httpClient().put(
         `http://localhost:8080/cliente/${clienteId}/domicilios/${idDomicilio}`,
         {
           body: JSON.stringify(transformedValues),
         }
-      )
+      );
 
-      toggleReload()
-      router.back()
+      toggleReload();
+      router.back();
     } catch (error: unknown) {
-      let errorMessage = 'Error desconocido'
+      let errorMessage = "Error desconocido";
 
       if (error instanceof Error) {
-        errorMessage = error.message
+        errorMessage = error.message;
       }
 
-      setError(errorMessage)
-      throw new Error(errorMessage)
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <ParallelModal>
@@ -123,7 +125,7 @@ const EditarDomicilioModal = () => {
               onPaisChange,
               onProvinciaChange
             )}
-            validationSchema={crearDomicilioSchema}
+            validationSchema={editarDomicilioSchema}
             onSubmit={handleSubmit}
             textButton="Guardar"
           />
@@ -132,7 +134,7 @@ const EditarDomicilioModal = () => {
         )}
       </div>
     </ParallelModal>
-  )
-}
+  );
+};
 
-export default EditarDomicilioModal
+export default EditarDomicilioModal;

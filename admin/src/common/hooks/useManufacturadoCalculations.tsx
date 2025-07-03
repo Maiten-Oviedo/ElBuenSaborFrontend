@@ -1,9 +1,10 @@
-'use client'
+"use client";
 
-import type React from 'react'
+import type React from "react";
 
-import { useEffect } from 'react'
-import type { FormThreeValues } from '@/features/modalManufacturado/FormRecetaManufacturado'
+import { useEffect } from "react";
+import type { FormThreeValues } from "@/features/modalManufacturado/FormRecetaManufacturado";
+import { useStoreInsumos } from "@/store/storeInsumos";
 
 export const useManufacturadoCalculations = (
   formThreeValues: FormThreeValues,
@@ -12,54 +13,67 @@ export const useManufacturadoCalculations = (
   isEditing = false
 ) => {
   // Función para calcular el precio de costo siguiendo la lógica del backend
+
   const calcularPrecioCosto = (
-    detalles: FormThreeValues['articuloManufacturadoDetalle']
+    detalles: FormThreeValues["articuloManufacturadoDetalle"]
   ) => {
-    let costoTotal = 0
+    const insumos = useStoreInsumos.getState().data;
+    let costoTotal = 0;
 
-    detalles.forEach(detalle => {
+    detalles.forEach((detalle) => {
       const insumo = insumos.find(
-        insumo => Number(insumo.id) === Number(detalle.articuloInsumoId)
-      )
-      if (insumo && insumo.precioVenta) {
-        // Lógica del backend: (precio / 1000) * cantidad
-        const precioPorGramo = insumo.precioVenta / 1000
-        const precioPorCantidad = precioPorGramo * detalle.cantidad
-        costoTotal += precioPorCantidad
-      }
-    })
+        (insumo) => Number(insumo.id) === Number(detalle.articuloInsumoId)
+      );
+      console.log("INSUMO: ", insumo);
+      if (insumo && insumo.precioVenta != null) {
+        const { precioVenta, unidadMedidaEnum } = insumo;
+        console.log("AAAA", precioVenta, unidadMedidaEnum);
 
-    return Number(costoTotal.toFixed(4))
-  }
+        const usaPrecioDirecto =
+          unidadMedidaEnum === "KG" ||
+          unidadMedidaEnum === "L" ||
+          unidadMedidaEnum === "UNIDAD";
+
+        const precioUnitario = usaPrecioDirecto
+          ? precioVenta // multiplico directamente
+          : precioVenta / 1000; // paso a precio por gramo/ml/etc.
+
+        const precioPorCantidad = precioUnitario * detalle.cantidad;
+        costoTotal += precioPorCantidad;
+      }
+    });
+
+    return Number(costoTotal.toFixed(4));
+  };
 
   // Función para calcular el tiempo estimado
   const calcularTiempoEstimado = (
-    detalles: FormThreeValues['articuloManufacturadoDetalle']
+    detalles: FormThreeValues["articuloManufacturadoDetalle"]
   ) => {
-    let totalTiempoEstimado = 0
+    let totalTiempoEstimado = 0;
 
-    detalles.forEach(detalle => {
+    detalles.forEach((detalle) => {
       const insumo = insumos.find(
-        insumo => Number(insumo.id) === Number(detalle.articuloInsumoId)
-      )
+        (insumo) => Number(insumo.id) === Number(detalle.articuloInsumoId)
+      );
       if (insumo) {
-        totalTiempoEstimado += insumo.tiempoEstimadoMinutos || 0
+        totalTiempoEstimado += insumo.tiempoEstimadoMinutos || 0;
       }
-    })
+    });
 
-    return totalTiempoEstimado
-  }
+    return totalTiempoEstimado;
+  };
 
   useEffect(() => {
     if (!formThreeValues || !formThreeValues.articuloManufacturadoDetalle)
-      return
+      return;
 
     const totalTiempoEstimado = calcularTiempoEstimado(
       formThreeValues.articuloManufacturadoDetalle
-    )
+    );
     const precioCostoCalculado = calcularPrecioCosto(
       formThreeValues.articuloManufacturadoDetalle
-    )
+    );
 
     setFormFourValues((prev: any) => {
       if (isEditing) {
@@ -67,33 +81,33 @@ export const useManufacturadoCalculations = (
         const nuevoPrecioVenta =
           prev.precioVenta < precioCostoCalculado
             ? precioCostoCalculado * 1.3
-            : prev.precioVenta
+            : prev.precioVenta;
 
         return {
           ...prev,
           tiempoEstimadoMinutos: totalTiempoEstimado,
           precioCosto: precioCostoCalculado,
           precioVenta: Math.max(nuevoPrecioVenta, precioCostoCalculado),
-        }
+        };
       } else {
         // En creación: calcular precio de venta sugerido
         const precioVentaSugerido = Number(
           (precioCostoCalculado * 1.3).toFixed(2)
-        )
+        );
         const nuevoPrecioVenta =
           prev.precioVenta < precioCostoCalculado
             ? precioVentaSugerido
-            : Math.max(prev.precioVenta, precioCostoCalculado)
+            : Math.max(prev.precioVenta, precioCostoCalculado);
 
         return {
           ...prev,
           tiempoEstimadoMinutos: totalTiempoEstimado,
           precioCosto: precioCostoCalculado,
           precioVenta: nuevoPrecioVenta,
-        }
+        };
       }
-    })
-  }, [formThreeValues, insumos, isEditing])
+    });
+  }, [formThreeValues, insumos, isEditing]);
 
-  return { calcularPrecioCosto, calcularTiempoEstimado }
-}
+  return { calcularPrecioCosto, calcularTiempoEstimado };
+};

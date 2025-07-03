@@ -9,7 +9,6 @@ interface PromocionesStore {
 
   getAll: () => Promise<void>
   create: (item: IArticuloPromocion) => Promise<void>
-  update: (item: IArticuloPromocion) => Promise<void>
   remove: (id: number) => Promise<void>
 
   shouldRefresh: boolean
@@ -24,12 +23,10 @@ export const useStorePromociones = create<PromocionesStore>((set, get) => ({
   getAll: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await httpClient().get(
+      const data = await httpClient().get(
         'http://localhost:8080/articulo-promocion/getAll'
       )
-      set({
-        data: response as IArticuloPromocion[],
-      })
+      set({ data }) // Aquí guardas los datos recibidos
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Error desconocido',
@@ -47,66 +44,33 @@ export const useStorePromociones = create<PromocionesStore>((set, get) => ({
           body: JSON.stringify(item),
         }
       )
-      set(state => ({
-        data: [...state.data, response],
-        shouldRefresh: true,
-      }))
+      await get().getAll()
+
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Error desconocido',
       })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
+
   },
 
-  update: async item => {
-    const previous = get().data.find(p => p.id === item.id)
-
-    set(state => ({
-      data: state.data.map(p => (p.id === item.id ? { ...p, ...item } : p)),
-      shouldRefresh: true,
-    }))
-
-    try {
-      await httpClient().put(
-        `http://localhost:8080/articulo-promocion/${item.id}`,
-        {
-          body: JSON.stringify(item),
-        }
-      )
-    } catch (err) {
-      if (previous) {
-        set(state => ({
-          data: state.data.map(p => (p.id === previous.id ? previous : p)),
-        }))
-      }
-      set({
-        error: err instanceof Error ? err.message : 'Error desconocido',
-      })
-      throw err
-    }
-  },
 
   remove: async id => {
-    const previous = get().data.find(p => p.id === id)
-
-    set(state => ({
-      data: state.data.filter(p => p.id !== id),
-    }))
-
     try {
       await httpClient().del(`http://localhost:8080/articulo-promocion/${id}`)
+      await get().getAll()
     } catch (err) {
-      if (previous) {
-        set(state => ({
-          data: [...state.data, previous],
-        }))
-      }
       set({
         error: err instanceof Error ? err.message : 'Error desconocido',
       })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
+
   },
 
   shouldRefresh: false,

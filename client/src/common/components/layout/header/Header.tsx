@@ -133,7 +133,7 @@ const Header = () => {
           onClick={toggleMenu}
           className="flex items-center gap-2 cursor-pointer"
         >
-          {cliente && <p className="text-xl">{cliente.nombre}</p>}
+          {isMounted && cliente && <p className="text-xl">{cliente.nombre}</p>}
           <FaUser className="text-2xl" />
         </button>
         {isMenuOpen && renderUserMenu()}

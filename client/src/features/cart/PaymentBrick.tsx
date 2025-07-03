@@ -1,3 +1,4 @@
+import httpClient from "@/common/lib/httpClient";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -31,20 +32,14 @@ const PaymentBrick = ({ pedidoId }: { pedidoId: number }) => {
     const loadBrick = async () => {
       setLoading(true);
       try {
-        // Pido la preferencia para este pedidoId
-        const res = await fetch(
+        const res = await httpClient().post(
           "http://localhost:8080/payment/create-preference",
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(pedidoId),
           }
         );
 
-        console.log(res);
-        if (!res.ok) throw new Error(`${res.status}`);
-
-        const { preferenceId, totalPedido } = await res.json();
+        const { preferenceId, totalPedido } = res;
 
         const bricksBuilder = mp.bricks();
         bricksBuilder.create("wallet", "paymentBrickContainer", {

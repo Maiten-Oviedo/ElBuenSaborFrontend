@@ -43,7 +43,7 @@ const saveToLocalStorage = (data: ICategoria[]) => {
 
 export const useStoreCategoriasManufacturados = create<CategoriasStore>()(
   (set, get) => ({
-    data: loadFromLocalStorage(),
+    data: [],
     subcategorias: [],
 
     setCategoriesManufacturados: dataArray => {
